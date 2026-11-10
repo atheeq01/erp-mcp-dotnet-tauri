@@ -1,64 +1,97 @@
-
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import Button from "../components/common/Button";
+
+const modules = [
+    {
+        title: "Inventory",
+        description: "View and manage inventory products.",
+        path: "/inventory",
+        roles: ["Admin", "Sales", "Store"],
+    },
+    {
+        title: "Orders",
+        description: "View and create customer orders.",
+        path: "/orders",
+        roles: ["Admin", "Sales"],
+    },
+    {
+        title: "User Management",
+        description: "Manage system user accounts.",
+        path: "/users",
+        roles: ["Admin"],
+    },
+    {
+        title: "AI Assistant",
+        description: "Interact with the ERP assistant.",
+        path: "/chat",
+        roles: ["Admin", "Sales", "Store"],
+    },
+];
 
 function Dashboard() {
-    const { user, logout } = useAuth();
-    const navigate = useNavigate();
+    const { user } = useAuth();
 
-    async function handleLogout() {
-        await logout();
-        navigate("/login");
-    }
+    const availableModules = modules.filter((module) =>
+        module.roles.includes(user?.role)
+    );
 
     return (
-        <main className="min-h-screen bg-slate-100 p-8">
+        <div className="mx-auto max-w-7xl">
 
-            <div className="mx-auto max-w-5xl">
+            <div className="mb-8">
+                <h1 className="text-2xl font-bold text-slate-900">
+                    Dashboard
+                </h1>
 
-                <header className="flex items-center justify-between rounded-xl bg-white p-6 shadow-sm">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">
-                            SPIL Mini ERP
-                        </h1>
-
-                        <p className="mt-1 text-sm text-slate-500">
-                            Dashboard
-                        </p>
-                    </div>
-
-                    <button
-                        onClick={handleLogout}
-                        className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                    >
-                        Logout
-                    </button>
-                </header>
-
-                <section className="mt-8 rounded-xl bg-white p-8 shadow-sm">
-
-                    <p className="text-sm text-slate-500">
-                        Welcome back,
-                    </p>
-
-                    <h2 className="mt-2 text-3xl font-bold text-slate-900">
-                        {user?.username}
-                    </h2>
-
-                    <div className="mt-4 inline-block rounded-full bg-green-100 px-4 py-2 text-sm font-semibold capitalize text-green-800">
-                        {user?.role}
-                    </div>
-
-                    <p className="mt-6 text-slate-500">
-                        Your authentication is working. ERP modules
-                        will be available here.
-                    </p>
-
-                </section>
-
+                <p className="mt-2 text-sm text-slate-500">
+                    Welcome back, {user?.username}. Here is your workspace.
+                </p>
             </div>
-        </main>
+
+            <section className="rounded-xl bg-green-900 p-8 text-white shadow-sm">
+                <p className="text-sm text-green-200">
+                    SPIL Mini ERP
+                </p>
+
+                <h2 className="mt-3 text-3xl font-bold">
+                    Business Management
+                </h2>
+
+                <p className="mt-3 max-w-xl text-sm leading-6 text-green-100">
+                    Manage inventory, orders and users from one
+                    centralized desktop application.
+                </p>
+            </section>
+
+            <section className="mt-8">
+                <h2 className="mb-4 text-lg font-semibold text-slate-800">
+                    Your Modules
+                </h2>
+
+                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    {availableModules.map((module) => (
+                        <Link
+                            key={module.path}
+                            to={module.path}
+                            className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-green-400 hover:shadow-md"
+                        >
+                            <h3 className="font-semibold text-slate-900">
+                                {module.title}
+                            </h3>
+
+                            <p className="mt-2 text-sm leading-6 text-slate-500">
+                                {module.description}
+                            </p>
+
+                            <p className="mt-5 text-sm font-semibold text-green-700">
+                                Open module →
+                            </p>
+                        </Link>
+                    ))}
+                </div>
+            </section>
+
+        </div>
     );
 }
 

@@ -29,3 +29,12 @@ appsettings.Development.json
 # OS
 .DS_Store
 Thumbs.db
+
+# AI Agents & Gemini / Antigravity
+.agents/
+**/.agents/
+.gemini/
+**/.gemini/
+.antigravity/
+**/.antigravity/
+skills-lock.json
