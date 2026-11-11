@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 
 function Skeleton({
     width = "100%",
@@ -8,7 +8,7 @@ function Skeleton({
 }) {
     return (
         <div
-            className={`bg-[color-mix(in_srgb,var(--paper)_70%,var(--line)_30%)] rounded-[2px] animate-pulse ${className}`}
+            className={`bg-[color-mix(in_srgb,var(--paper)_70%,var(--line)_30%)] rounded-xs animate-pulse ${className}`}
             style={{ width, height, ...style }}
             aria-hidden="true"
         />

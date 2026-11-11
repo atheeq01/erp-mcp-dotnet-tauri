@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { callMcpTool } from "../services/mcpService";
 import DataTable from "../components/common/DataTable";
@@ -32,7 +32,7 @@ function Users() {
     }
 
     useEffect(() => {
-        loadUsers();
+        void loadUsers();
     }, []);
 
     async function handleCreateUser(formData) {
@@ -53,8 +53,8 @@ function Users() {
             sortable: true,
             render: (val, row) => (
                 <div className="flex items-center gap-2">
-                    <span className="font-semibold text-[var(--ink)]">
-                        {val ?? row.Username ?? "—"}
+                    <span className="font-semibold text-(--ink)">
+                        {val ?? row.username ?? "—"}
                     </span>
                 </div>
             ),
@@ -65,9 +65,9 @@ function Users() {
             sortable: true,
             width: "160px",
             render: (val, row) => {
-                const role = val ?? row.Role ?? "—";
+                const role = val ?? row.role ?? "—";
                 return (
-                    <span className="font-mono text-xs text-[var(--ink)]">
+                    <span className="font-mono text-xs text-(--ink)">
                         {role}
                     </span>
                 );
@@ -79,7 +79,7 @@ function Users() {
             align: "center",
             width: "120px",
             render: (val, row) => {
-                const active = val ?? row.IsActive ?? true;
+                const active = val ?? row.isActive ?? true;
                 return (
                     <StatusBadge tone={active ? "default" : "attention"}>
                         {active ? "Active" : "Disabled"}
@@ -94,7 +94,7 @@ function Users() {
             align: "right",
             width: "160px",
             render: (val, row) => {
-                const raw = val ?? row.CreatedAtUtc;
+                const raw = val ?? row.createdAtUtc;
                 if (!raw) return "—";
                 return (
                     <span className="font-mono tabular-nums text-[color-mix(in_srgb,var(--ink)_65%,white)]">
@@ -107,10 +107,10 @@ function Users() {
 
     return (
         <div className="mx-auto max-w-6xl space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--line)] pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-(--line) pb-4">
                 <div>
                     <span className="label-caps">Access & Security</span>
-                    <h2 className="font-display text-2xl font-bold tracking-tight text-[var(--ink)] mt-0.5">
+                    <h2 className="font-display text-2xl font-bold tracking-tight text-(--ink) mt-0.5">
                         User Accounts
                     </h2>
                 </div>

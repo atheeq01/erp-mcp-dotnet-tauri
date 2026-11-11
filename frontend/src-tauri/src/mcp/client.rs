@@ -1,6 +1,13 @@
 use serde_json::{Value, json};
 use std::io::{BufRead, BufReader, Write};
+use std::path::PathBuf;
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
+
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 pub struct McpClient {
     child: Child,
@@ -11,13 +18,12 @@ pub struct McpClient {
 
 impl McpClient {
     pub fn start() -> Result<Self, String> {
-        let backend_path = r"E:\spil\spil-mini-erp\backend\SpilMcpServer\SpilMcpServer";
-        let project_file =
-            r"E:\spil\spil-mini-erp\backend\SpilMcpServer\SpilMcpServer\SpilMcpServer.csproj";
+        let mut command = Self::build_command()?;
 
-        let mut child = Command::new("dotnet")
-            .args(["run", "--no-build", "--project", project_file])
-            .current_dir(backend_path)
+        #[cfg(windows)]
+        command.creation_flags(CREATE_NO_WINDOW);
+
+        let mut child = command
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
@@ -53,6 +59,44 @@ impl McpClient {
         client.notify("notifications/initialized")?;
 
         Ok(client)
+    }
+
+    fn build_command() -> Result<Command, String> {
+        let current_exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        let exe_dir = current_exe.parent().unwrap_or_else(|| std::path::Path::new(""));
+
+        let binary_candidates = [
+            exe_dir.join("SpilMcpServer.exe"),
+            exe_dir.join("bin").join("SpilMcpServer.exe"),
+            exe_dir.join("resources").join("bin").join("SpilMcpServer.exe"),
+            PathBuf::from("bin").join("SpilMcpServer.exe"),
+            PathBuf::from("src-tauri/bin").join("SpilMcpServer.exe"),
+            PathBuf::from("frontend/src-tauri/bin").join("SpilMcpServer.exe"),
+        ];
+
+        for candidate in &binary_candidates {
+            if candidate.exists() {
+                let mut cmd = Command::new(candidate);
+                if let Some(parent) = candidate.parent() {
+                    cmd.current_dir(parent);
+                }
+                return Ok(cmd);
+            }
+        }
+
+        // Fallback for development: use `dotnet run`
+        let dev_project = PathBuf::from(
+            r"E:\spil\spil-mini-erp\backend\SpilMcpServer\SpilMcpServer\SpilMcpServer.csproj",
+        );
+        if dev_project.exists() {
+            let mut cmd = Command::new("dotnet");
+            cmd.args(["run", "--no-build", "--project"])
+                .arg(&dev_project)
+                .current_dir(dev_project.parent().unwrap());
+            return Ok(cmd);
+        }
+
+        Err("Could not locate SpilMcpServer binary or dev project".into())
     }
 
     fn request(&mut self, method: &str, params: Value) -> Result<Value, String> {

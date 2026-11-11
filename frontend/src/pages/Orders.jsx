@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { callMcpTool } from "../services/mcpService";
 import { useAuth } from "../hooks/useAuth";
@@ -45,7 +45,7 @@ function Orders() {
     }
 
     useEffect(() => {
-        loadOrdersData();
+        void loadOrdersData();
     }, []);
 
     async function handleCreateOrder(values) {
@@ -68,8 +68,8 @@ function Orders() {
             header: "Order Identifier",
             sortable: true,
             render: (val, row) => (
-                <span className="font-mono font-medium text-[var(--ink)]">
-                    {val ?? row.OrderNumber ?? "—"}
+                <span className="font-mono font-medium text-(--ink)">
+                    {val ?? row.orderNumber ?? "—"}
                 </span>
             ),
         },
@@ -78,7 +78,7 @@ function Orders() {
             header: "Sales Representative",
             sortable: true,
             render: (val, row) =>
-                val ?? row.userId ?? row.UserId ?? "—",
+                val ?? row.userId ?? "—",
         },
         {
             key: "orderItems",
@@ -86,7 +86,7 @@ function Orders() {
             align: "center",
             width: "100px",
             render: (val, row) => {
-                const count = (val ?? row.OrderItems ?? row.items ?? []).length;
+                const count = (val ?? row.items ?? []).length;
                 return <span className="font-mono tabular-nums">{count}</span>;
             },
         },
@@ -97,9 +97,9 @@ function Orders() {
             align: "right",
             width: "140px",
             render: (val, row) => {
-                const total = Number(val ?? row.TotalAmount ?? 0);
+                const total = Number(val ?? row.totalAmount ?? 0);
                 return (
-                    <span className="font-mono font-bold tabular-nums text-[var(--ink)]">
+                    <span className="font-mono font-bold tabular-nums text-(--ink)">
                         ${total.toFixed(2)}
                     </span>
                 );
@@ -112,7 +112,7 @@ function Orders() {
             align: "right",
             width: "180px",
             render: (val, row) => {
-                const raw = val ?? row.CreatedAtUtc;
+                const raw = val ?? row.createdAtUtc;
                 if (!raw) return "—";
                 return (
                     <span className="font-mono tabular-nums text-[color-mix(in_srgb,var(--ink)_65%,white)]">
@@ -125,10 +125,10 @@ function Orders() {
 
     return (
         <div className="mx-auto max-w-6xl space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--line)] pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-(--line) pb-4">
                 <div>
                     <span className="label-caps">Transactions & Invoices</span>
-                    <h2 className="font-display text-2xl font-bold tracking-tight text-[var(--ink)] mt-0.5">
+                    <h2 className="font-display text-2xl font-bold tracking-tight text-(--ink) mt-0.5">
                         Customer Orders
                     </h2>
                 </div>

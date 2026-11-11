@@ -56,7 +56,19 @@ builder.Services
 
 var app = builder.Build();
 
-// onetime admin setup
+// Automatically apply EF Core migrations to SQL Server on startup
+try
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"[Database Migration Warning]: {ex.Message}");
+}
+
+// onetime admin setup CLI fallback
 if (args.Contains("--seed-admin"))
 {
     using var scope = app.Services.CreateScope();

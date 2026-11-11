@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+﻿import React, { useState, useRef, useEffect } from "react";
 import { Send, Square } from "lucide-react";
 import Button from "../common/Button";
 
@@ -33,8 +33,8 @@ function ChatInput({ onSend, onCancel, isPending }) {
     }
 
     return (
-        <div className="w-full border-t border-[var(--line)] bg-[var(--paper)] p-3">
-            <div className="mx-auto max-w-4xl flex items-end gap-2 bg-white border border-[var(--line)] rounded-[2px] p-2 focus-within:border-[var(--accent)] transition-colors">
+        <div className="w-full border-t border-(--line) bg-(--paper) p-3">
+            <div className="mx-auto max-w-4xl flex items-end gap-2 bg-white border border-(--line) rounded-xs p-2 focus-within:border-(--accent) transition-colors">
                 <textarea
                     ref={textareaRef}
                     rows={1}
@@ -43,7 +43,7 @@ function ChatInput({ onSend, onCancel, isPending }) {
                     onKeyDown={handleKeyDown}
                     placeholder="Enter command or question (e.g. 'get orders', 'make order', 'show low stock')..."
                     disabled={isPending}
-                    className="flex-1 max-h-44 resize-none bg-transparent px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[color-mix(in_srgb,var(--ink)_40%,white)] focus:outline-none disabled:cursor-not-allowed leading-relaxed"
+                    className="flex-1 max-h-44 resize-none bg-transparent px-3 py-2 text-sm text-(--ink) placeholder:text-[color-mix(in_srgb,var(--ink)_40%,white)] focus:outline-none disabled:cursor-not-allowed leading-relaxed"
                 />
 
                 <div className="flex items-center gap-2 pb-1 pr-1">

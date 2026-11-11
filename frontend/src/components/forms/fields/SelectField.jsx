@@ -1,4 +1,4 @@
-import React, { useId } from "react";
+﻿import React, { useId } from "react";
 import { ChevronDown } from "lucide-react";
 
 function SelectField({
@@ -29,7 +29,7 @@ function SelectField({
                     className="text-xs uppercase tracking-wider font-semibold text-[color-mix(in_srgb,var(--ink)_80%,white)]"
                 >
                     {label}
-                    {required && <span className="text-[var(--accent)] ml-1">*</span>}
+                    {required && <span className="text-(--accent) ml-1">*</span>}
                 </label>
             )}
 
@@ -45,8 +45,8 @@ function SelectField({
                     aria-describedby={
                         error ? errorId : hint ? hintId : undefined
                     }
-                    className={`w-full h-[var(--input-btn-h)] pl-3 pr-8 text-sm bg-white text-[var(--ink)] border rounded-[2px] appearance-none transition-colors focus:outline-none focus:border-[var(--accent)] disabled:bg-[var(--paper)] disabled:cursor-not-allowed ${
-                        error ? "border-[var(--accent)]" : "border-[var(--line)]"
+                    className={`w-full h-(--input-btn-h) pl-3 pr-8 text-sm bg-white text-(--ink) border rounded-xs appearance-none transition-colors focus:outline-none focus:border-(--accent) disabled:bg-(--paper) disabled:cursor-not-allowed ${
+                        error ? "border-(--accent)" : "border-(--line)"
                     }`}
                     {...rest}
                 >
@@ -72,7 +72,7 @@ function SelectField({
             </div>
 
             {error ? (
-                <p id={errorId} className="text-xs text-[var(--accent)] font-medium">
+                <p id={errorId} className="text-xs text-(--accent) font-medium">
                     {error}
                 </p>
             ) : hint ? (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     AlertTriangle,
@@ -50,26 +50,26 @@ function Dashboard() {
     }
 
     useEffect(() => {
-        loadDashboardData();
+        void loadDashboardData();
     }, []);
 
     const lowStockItems = inventory.filter(
-        (item) => Number(item.quantityAvailable ?? item.QuantityAvailable ?? 0) <= 20
+        (item) => Number(item.quantityAvailable ?? 0) <= 20
     );
 
     const todayStr = new Date().toISOString().slice(0, 10);
     const ordersToday = orders.filter((o) => {
-        const date = o.createdAtUtc ?? o.CreatedAtUtc;
+        const date = o.createdAtUtc;
         return date && date.startsWith(todayStr);
     });
 
     const totalRevenue = orders.reduce(
-        (sum, o) => sum + Number(o.totalAmount ?? o.TotalAmount ?? 0),
+        (sum, o) => sum + Number(o.totalAmount ?? 0),
         0
     );
 
     const totalStockUnits = inventory.reduce(
-        (sum, i) => sum + Number(i.quantityAvailable ?? i.QuantityAvailable ?? 0),
+        (sum, i) => sum + Number(i.quantityAvailable ?? 0),
         0
     );
 
@@ -78,8 +78,8 @@ function Dashboard() {
             key: "orderNumber",
             header: "Order Number",
             render: (val, row) => (
-                <span className="font-mono font-medium text-[var(--ink)]">
-                    {val ?? row.OrderNumber ?? "—"}
+                <span className="font-mono font-medium text-(--ink)">
+                    {val ?? row.orderNumber ?? "—"}
                 </span>
             ),
         },
@@ -87,14 +87,14 @@ function Dashboard() {
             key: "username",
             header: "Placed By",
             render: (val, row) =>
-                val ?? row.userId ?? row.UserId ?? "—",
+                val ?? row.userId ?? "—",
         },
         {
             key: "orderItems",
             header: "Items",
             align: "center",
             render: (val, row) => {
-                const items = val ?? row.OrderItems ?? row.items ?? [];
+                const items = val ?? row.items ?? [];
                 return <span className="font-mono tabular-nums">{items.length}</span>;
             },
         },
@@ -103,9 +103,9 @@ function Dashboard() {
             header: "Total Amount",
             align: "right",
             render: (val, row) => {
-                const amt = Number(val ?? row.TotalAmount ?? 0);
+                const amt = Number(val ?? row.totalAmount ?? 0);
                 return (
-                    <span className="font-mono font-semibold tabular-nums text-[var(--ink)]">
+                    <span className="font-mono font-semibold tabular-nums text-(--ink)">
                         ${amt.toFixed(2)}
                     </span>
                 );
@@ -116,7 +116,7 @@ function Dashboard() {
             header: "Date Logged",
             align: "right",
             render: (val, row) => {
-                const raw = val ?? row.CreatedAtUtc;
+                const raw = val ?? row.createdAtUtc;
                 if (!raw) return "—";
                 return (
                     <span className="font-mono tabular-nums text-[color-mix(in_srgb,var(--ink)_65%,white)]">
@@ -129,10 +129,10 @@ function Dashboard() {
 
     return (
         <div className="mx-auto max-w-6xl space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--line)] pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-(--line) pb-4">
                 <div>
                     <span className="label-caps">SPIL Operational Status</span>
-                    <h2 className="font-display text-2xl font-bold tracking-tight text-[var(--ink)] mt-0.5">
+                    <h2 className="font-display text-2xl font-bold tracking-tight text-(--ink) mt-0.5">
                         Overview & Daily Activity
                     </h2>
                 </div>
@@ -172,7 +172,7 @@ function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-5 bg-white border border-[var(--line)] rounded-[2px] flex flex-col justify-between">
+                <div className="p-5 bg-white border border-(--line) rounded-xs flex flex-col justify-between">
                     <div className="flex items-center justify-between">
                         <span className="label-caps text-[color-mix(in_srgb,var(--ink)_70%,white)]">
                             Low Stock Alert
@@ -180,7 +180,7 @@ function Dashboard() {
                         <AlertTriangle
                             className={`h-4 w-4 ${
                                 lowStockItems.length > 0
-                                    ? "text-[var(--accent)]"
+                                    ? "text-(--accent)"
                                     : "text-[color-mix(in_srgb,var(--ink)_30%,white)]"
                             }`}
                             strokeWidth={1.5}
@@ -190,8 +190,8 @@ function Dashboard() {
                         <span
                             className={`font-mono text-3xl font-bold tabular-nums ${
                                 lowStockItems.length > 0
-                                    ? "text-[var(--accent)]"
-                                    : "text-[var(--ink)]"
+                                     ? "text-(--accent)"
+                                     : "text-(--ink)"
                             }`}
                         >
                             {loading ? "—" : lowStockItems.length}
@@ -202,15 +202,15 @@ function Dashboard() {
                     </div>
                 </div>
 
-                <div className="p-5 bg-white border border-[var(--line)] rounded-[2px] flex flex-col justify-between">
+                <div className="p-5 bg-white border border-(--line) rounded-xs flex flex-col justify-between">
                     <div className="flex items-center justify-between">
                         <span className="label-caps text-[color-mix(in_srgb,var(--ink)_70%,white)]">
                             Orders Today
                         </span>
-                        <ShoppingBag className="h-4 w-4 text-[var(--ink)]" strokeWidth={1.5} />
+                        <ShoppingBag className="h-4 w-4 text-(--ink)" strokeWidth={1.5} />
                     </div>
                     <div className="mt-4">
-                        <span className="font-mono text-3xl font-bold tabular-nums text-[var(--ink)]">
+                        <span className="font-mono text-3xl font-bold tabular-nums text-(--ink)">
                             {loading ? "—" : ordersToday.length}
                         </span>
                         <p className="text-xs text-[color-mix(in_srgb,var(--ink)_55%,white)] mt-1 font-mono">
@@ -219,15 +219,15 @@ function Dashboard() {
                     </div>
                 </div>
 
-                <div className="p-5 bg-white border border-[var(--line)] rounded-[2px] flex flex-col justify-between">
+                <div className="p-5 bg-white border border-(--line) rounded-xs flex flex-col justify-between">
                     <div className="flex items-center justify-between">
                         <span className="label-caps text-[color-mix(in_srgb,var(--ink)_70%,white)]">
                             Total Order Volume
                         </span>
-                        <TrendingUp className="h-4 w-4 text-[var(--ink)]" strokeWidth={1.5} />
+                        <TrendingUp className="h-4 w-4 text-(--ink)" strokeWidth={1.5} />
                     </div>
                     <div className="mt-4">
-                        <span className="font-mono text-3xl font-bold tabular-nums text-[var(--ink)]">
+                        <span className="font-mono text-3xl font-bold tabular-nums text-(--ink)">
                             {loading ? "—" : `$${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         </span>
                         <p className="text-xs text-[color-mix(in_srgb,var(--ink)_55%,white)] mt-1 font-mono">
@@ -236,15 +236,15 @@ function Dashboard() {
                     </div>
                 </div>
 
-                <div className="p-5 bg-white border border-[var(--line)] rounded-[2px] flex flex-col justify-between">
+                <div className="p-5 bg-white border border-(--line) rounded-xs flex flex-col justify-between">
                     <div className="flex items-center justify-between">
                         <span className="label-caps text-[color-mix(in_srgb,var(--ink)_70%,white)]">
                             Physical Units in Stock
                         </span>
-                        <Boxes className="h-4 w-4 text-[var(--ink)]" strokeWidth={1.5} />
+                        <Boxes className="h-4 w-4 text-(--ink)" strokeWidth={1.5} />
                     </div>
                     <div className="mt-4">
-                        <span className="font-mono text-3xl font-bold tabular-nums text-[var(--ink)]">
+                        <span className="font-mono text-3xl font-bold tabular-nums text-(--ink)">
                             {loading ? "—" : totalStockUnits.toLocaleString()}
                         </span>
                         <p className="text-xs text-[color-mix(in_srgb,var(--ink)_55%,white)] mt-1 font-mono">
@@ -257,7 +257,7 @@ function Dashboard() {
             <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="font-display text-base font-bold tracking-tight text-[var(--ink)]">
+                        <h3 className="font-display text-base font-bold tracking-tight text-(--ink)">
                             Recent Order Ledger
                         </h3>
                         <p className="text-xs text-[color-mix(in_srgb,var(--ink)_55%,white)]">

@@ -7,6 +7,7 @@ import AppLayout from "./components/layout/AppLayout";
 import Skeleton from "./components/common/Skeleton";
 
 const Login = lazy(() => import("./pages/Login"));
+const SetupAdmin = lazy(() => import("./pages/SetupAdmin"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Inventory = lazy(() => import("./pages/Inventory"));
 const Orders = lazy(() => import("./pages/Orders"));
@@ -51,6 +52,15 @@ function AppRoutes() {
     return (
         <Suspense fallback={<RouteSkeleton />}>
             <Routes>
+                <Route
+                    path="/setup"
+                    element={
+                        <PublicRoute>
+                            <SetupAdmin />
+                        </PublicRoute>
+                    }
+                />
+
                 <Route
                     path="/login"
                     element={

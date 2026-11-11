@@ -1,4 +1,4 @@
-import React, { useId } from "react";
+﻿import React, { useId } from "react";
 
 function TextArea({
     id,
@@ -28,7 +28,7 @@ function TextArea({
                     className="text-xs uppercase tracking-wider font-semibold text-[color-mix(in_srgb,var(--ink)_80%,white)]"
                 >
                     {label}
-                    {required && <span className="text-[var(--accent)] ml-1">*</span>}
+                    {required && <span className="text-(--accent) ml-1">*</span>}
                 </label>
             )}
 
@@ -45,14 +45,14 @@ function TextArea({
                 aria-describedby={
                     error ? errorId : hint ? hintId : undefined
                 }
-                className={`p-3 text-sm bg-white text-[var(--ink)] border rounded-[2px] placeholder:text-[color-mix(in_srgb,var(--ink)_40%,white)] transition-colors focus:outline-none focus:border-[var(--accent)] resize-y disabled:bg-[var(--paper)] disabled:cursor-not-allowed ${
-                    error ? "border-[var(--accent)]" : "border-[var(--line)]"
+                className={`p-3 text-sm bg-white text-(--ink) border rounded-xs placeholder:text-[color-mix(in_srgb,var(--ink)_40%,white)] transition-colors focus:outline-none focus:border-(--accent) resize-y disabled:bg-(--paper) disabled:cursor-not-allowed ${
+                    error ? "border-(--accent)" : "border-(--line)"
                 }`}
                 {...rest}
             />
 
             {error ? (
-                <p id={errorId} className="text-xs text-[var(--accent)] font-medium">
+                <p id={errorId} className="text-xs text-(--accent) font-medium">
                     {error}
                 </p>
             ) : hint ? (

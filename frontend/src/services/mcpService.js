@@ -27,6 +27,14 @@ export async function executeConfirmedIntent(tool, params) {
     return await invoke("execute_confirmed_intent", { tool, params });
 }
 
+export async function checkSetupStatus() {
+    return await invoke("check_setup_status");
+}
+
+export async function setupInitialAdmin(username, password) {
+    return await invoke("setup_initial_admin", { username, password });
+}
+
 export async function logoutUser() {
     return await invoke("logout");
 }

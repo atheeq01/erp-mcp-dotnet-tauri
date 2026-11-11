@@ -1,4 +1,4 @@
-import React, { useState, useId } from "react";
+﻿import React, { useState, useId } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 function PasswordField({
@@ -7,7 +7,7 @@ function PasswordField({
     label,
     value,
     onChange,
-    placeholder = "••••••••",
+    placeholder = "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢",
     hint = "",
     error = "",
     required = false,
@@ -30,7 +30,7 @@ function PasswordField({
                     className="text-xs uppercase tracking-wider font-semibold text-[color-mix(in_srgb,var(--ink)_80%,white)]"
                 >
                     {label}
-                    {required && <span className="text-[var(--accent)] ml-1">*</span>}
+                    {required && <span className="text-(--accent) ml-1">*</span>}
                 </label>
             )}
 
@@ -49,15 +49,15 @@ function PasswordField({
                     aria-describedby={
                         error ? errorId : hint ? hintId : undefined
                     }
-                    className={`w-full h-[var(--input-btn-h)] pl-3 pr-10 text-sm font-mono bg-white text-[var(--ink)] border rounded-[2px] placeholder:text-[color-mix(in_srgb,var(--ink)_40%,white)] transition-colors focus:outline-none focus:border-[var(--accent)] disabled:bg-[var(--paper)] disabled:cursor-not-allowed ${
-                        error ? "border-[var(--accent)]" : "border-[var(--line)]"
+                    className={`w-full h-(--input-btn-h) pl-3 pr-10 text-sm font-mono bg-white text-(--ink) border rounded-xs placeholder:text-[color-mix(in_srgb,var(--ink)_40%,white)] transition-colors focus:outline-none focus:border-(--accent) disabled:bg-(--paper) disabled:cursor-not-allowed ${
+                        error ? "border-(--accent)" : "border-(--line)"
                     }`}
                     {...rest}
                 />
                 <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[color-mix(in_srgb,var(--ink)_50%,white)] hover:text-[var(--ink)] transition-colors"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[color-mix(in_srgb,var(--ink)_50%,white)] hover:text-(--ink) transition-colors"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                     tabIndex={-1}
                 >
@@ -70,7 +70,7 @@ function PasswordField({
             </div>
 
             {error ? (
-                <p id={errorId} className="text-xs text-[var(--accent)] font-medium">
+                <p id={errorId} className="text-xs text-(--accent) font-medium">
                     {error}
                 </p>
             ) : hint ? (

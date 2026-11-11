@@ -59,7 +59,14 @@ impl SemanticEngine {
     }
 
     pub fn find_and_load() -> Result<Self, AppError> {
+        let exe_dir = std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|p| p.to_path_buf()))
+            .unwrap_or_default();
+
         let candidates = [
+            exe_dir.join("resources").join(MODEL_DIR),
+            exe_dir.join(MODEL_DIR),
             PathBuf::from(MODEL_DIR),
             PathBuf::from("frontend/src-tauri").join(MODEL_DIR),
             PathBuf::from("src-tauri").join(MODEL_DIR),

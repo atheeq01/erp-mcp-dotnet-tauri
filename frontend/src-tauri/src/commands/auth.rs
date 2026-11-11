@@ -129,3 +129,54 @@ pub fn get_local_session(state: State<'_, McpState>) -> Result<Value, AppError> 
         "role": session.role
     }))
 }
+
+#[tauri::command]
+pub fn check_setup_status(state: State<'_, McpState>) -> Result<Value, AppError> {
+    let result = {
+        let mut client = state
+            .client
+            .lock()
+            .map_err(|e| AppError::McpError(e.to_string()))?;
+
+        client
+            .call_tool("check_setup_status", json!({}))
+            .map_err(AppError::McpError)?
+    };
+
+    extract_tool_payload(result)
+}
+
+#[tauri::command]
+pub fn setup_initial_admin(
+    username: String,
+    password: String,
+    state: State<'_, McpState>,
+) -> Result<Value, AppError> {
+    let result = {
+        let mut client = state
+            .client
+            .lock()
+            .map_err(|e| AppError::McpError(e.to_string()))?;
+
+        client
+            .call_tool(
+                "setup_initial_admin",
+                json!({
+                    "username": username,
+                    "password": password
+                }),
+            )
+            .map_err(AppError::McpError)?
+    };
+
+    let data = extract_tool_payload(result)?;
+    if data.get("success").and_then(Value::as_bool) == Some(false) {
+        let msg = data
+            .get("message")
+            .and_then(Value::as_str)
+            .unwrap_or("Failed to setup initial admin account");
+        return Err(AppError::SessionError(msg.to_string()));
+    }
+
+    Ok(data)
+}

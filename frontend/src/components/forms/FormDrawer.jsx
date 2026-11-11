@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+﻿import React, { useEffect } from "react";
 import { X } from "lucide-react";
 
 function FormDrawer({
@@ -39,13 +39,13 @@ function FormDrawer({
                 aria-modal="true"
                 aria-labelledby="drawer-title"
                 style={{ width: "var(--drawer-w)", maxWidth: "100vw" }}
-                className="relative z-10 flex h-full flex-col bg-white border-l border-[var(--line)] shadow-none animate-in slide-in-from-right duration-200"
+                className="relative z-10 flex h-full flex-col bg-white border-l border-(--line) shadow-none animate-in slide-in-from-right duration-200"
             >
-                <div className="flex items-center justify-between border-b border-[var(--line)] bg-[var(--paper)] px-6 py-4">
+                <div className="flex items-center justify-between border-b border-(--line) bg-(--paper) px-6 py-4">
                     <div>
                         <h2
                             id="drawer-title"
-                            className="font-display text-base font-bold tracking-tight text-[var(--ink)]"
+                            className="font-display text-base font-bold tracking-tight text-(--ink)"
                         >
                             {title}
                         </h2>
@@ -58,7 +58,7 @@ function FormDrawer({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-[2px] p-1.5 text-[color-mix(in_srgb,var(--ink)_60%,white)] hover:text-[var(--ink)] hover:bg-[color-mix(in_srgb,var(--paper)_80%,var(--line))] transition-colors"
+                        className="rounded-xs p-1.5 text-[color-mix(in_srgb,var(--ink)_60%,white)] hover:text-(--ink) hover:bg-[color-mix(in_srgb,var(--paper)_80%,var(--line))] transition-colors"
                         aria-label="Close form drawer"
                     >
                         <X className="h-5 w-5" strokeWidth={1.5} />

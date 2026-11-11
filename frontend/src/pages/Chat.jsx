@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+﻿import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Trash2, ArrowDown } from "lucide-react";
 import { useChat } from "../context/ChatContext";
 import ChatMessage from "../components/chat/ChatMessage";
@@ -64,15 +64,15 @@ function Chat() {
     const showEmptyState = messages.length <= 1;
 
     return (
-        <div className="flex flex-col h-[calc(100vh-var(--topbar-h)-3rem)] -m-6 bg-[var(--paper)]">
-            <div className="shrink-0 flex items-center justify-between px-6 py-2.5 bg-white border-b border-[var(--line)]">
+        <div className="flex flex-col h-[calc(100vh-var(--topbar-h)-3rem)] -m-6 bg-(--paper)">
+            <div className="shrink-0 flex items-center justify-between px-6 py-2.5 bg-white border-b border-(--line)">
                 <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-[var(--accent)]" />
-                    <span className="font-mono text-xs font-semibold text-[var(--ink)]">
+                    <span className="h-2 w-2 rounded-full bg-(--accent)" />
+                    <span className="font-mono text-xs font-semibold text-(--ink)">
                         Hybrid Intent MCP Terminal
                     </span>
                     <span className="text-[11px] text-[color-mix(in_srgb,var(--ink)_50%,white)]">
-                        · ONNX MiniLM-L6-v2 + Regex Matching
+                        Â· ONNX MiniLM-L6-v2 + Regex Matching
                     </span>
                 </div>
 
@@ -114,9 +114,9 @@ function Chat() {
                     <button
                         type="button"
                         onClick={scrollToBottom}
-                        className="fixed bottom-24 right-10 p-2 bg-white text-[var(--ink)] border border-[var(--line)] rounded-[2px] shadow-sm hover:border-[var(--ink)] transition-all flex items-center gap-1.5 text-xs font-mono select-none"
+                        className="fixed bottom-24 right-10 p-2 bg-white text-(--ink) border border-(--line) rounded-xs shadow-sm hover:border-(--ink) transition-all flex items-center gap-1.5 text-xs font-mono select-none"
                     >
-                        <ArrowDown className="h-3.5 w-3.5 text-[var(--accent)]" strokeWidth={1.5} />
+                        <ArrowDown className="h-3.5 w-3.5 text-(--accent)" strokeWidth={1.5} />
                         <span>Latest</span>
                     </button>
                 )}

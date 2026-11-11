@@ -85,8 +85,8 @@ function DataTable({
 
     if (error) {
         return (
-            <div className="p-8 border border-[var(--accent)] bg-white rounded-[2px] text-center my-4">
-                <div className="flex items-center justify-center gap-2 text-[var(--accent)] mb-2">
+            <div className="p-8 border border-(--accent) bg-white rounded-xs text-center my-4">
+                <div className="flex items-center justify-center gap-2 text-(--accent) mb-2">
                     <AlertCircle className="h-5 w-5" strokeWidth={1.5} />
                     <span className="font-semibold text-sm">Failed to Load Records</span>
                 </div>
@@ -115,7 +115,7 @@ function DataTable({
                         value={rawSearch}
                         onChange={(e) => setRawSearch(e.target.value)}
                         placeholder={searchPlaceholder}
-                        className="w-full h-[var(--input-btn-h)] pl-9 pr-3 text-sm bg-white border border-[var(--line)] rounded-[2px] focus:outline-none focus:border-[var(--accent)] placeholder:text-[color-mix(in_srgb,var(--ink)_40%,white)] transition-colors"
+                        className="w-full h-(--input-btn-h) pl-9 pr-3 text-sm bg-white border border-(--line) rounded-xs focus:outline-none focus:border-(--accent) placeholder:text-[color-mix(in_srgb,var(--ink)_40%,white)] transition-colors"
                     />
                 </div>
 
@@ -125,10 +125,10 @@ function DataTable({
                 </div>
             </div>
 
-            <div className="overflow-x-auto border border-[var(--line)] bg-white rounded-[2px]">
+            <div className="overflow-x-auto border border-(--line) bg-white rounded-xs">
                 <table className="w-full border-collapse text-left">
                     <thead>
-                        <tr className="bg-[var(--paper)] border-b border-[var(--line)]">
+                        <tr className="bg-(--paper) border-b border-(--line)">
                             {columns.map((col) => {
                                 const isSorted = sortConfig.key === col.key;
                                 return (
@@ -138,7 +138,7 @@ function DataTable({
                                         style={{ width: col.width }}
                                         className={`px-4 py-3 text-[11px] font-mono uppercase tracking-wider font-semibold text-[color-mix(in_srgb,var(--ink)_75%,white)] select-none whitespace-nowrap ${
                                             col.sortable
-                                                ? "cursor-pointer hover:text-[var(--ink)]"
+                                                ? "cursor-pointer hover:text-(--ink)"
                                                 : ""
                                         } ${
                                             col.align === "right"
@@ -169,9 +169,9 @@ function DataTable({
                                                 <span className="shrink-0 text-[color-mix(in_srgb,var(--ink)_40%,white)]">
                                                     {isSorted ? (
                                                         sortConfig.direction === "asc" ? (
-                                                            <ArrowUp className="h-3.5 w-3.5 text-[var(--accent)]" strokeWidth={1.5} />
+                                                            <ArrowUp className="h-3.5 w-3.5 text-(--accent)" strokeWidth={1.5} />
                                                         ) : (
-                                                            <ArrowDown className="h-3.5 w-3.5 text-[var(--accent)]" strokeWidth={1.5} />
+                                                            <ArrowDown className="h-3.5 w-3.5 text-(--accent)" strokeWidth={1.5} />
                                                         )
                                                     ) : (
                                                         <ArrowUpDown className="h-3.5 w-3.5 opacity-40 hover:opacity-100" strokeWidth={1.5} />
@@ -185,7 +185,7 @@ function DataTable({
                         </tr>
                     </thead>
 
-                    <tbody className="divide-y divide-[var(--line)] font-sans">
+                    <tbody className="divide-y divide-(--line) font-sans">
                         {loading ? (
                             Array.from({ length: 5 }).map((_, rIdx) => (
                                 <tr key={`skeleton-${rIdx}`} style={{ height: "var(--table-row-h)" }}>
@@ -217,14 +217,14 @@ function DataTable({
                                     <tr
                                         key={rowKey}
                                         style={{ height: "var(--table-row-h)" }}
-                                        className="hover:bg-[color-mix(in_srgb,var(--paper)_40%,white_60%)] transition-colors duration-100 text-[var(--table-body-text)]"
+                                        className="hover:bg-[color-mix(in_srgb,var(--paper)_40%,white_60%)] transition-colors duration-100 text-(--table-body-text)"
                                     >
                                         {columns.map((col) => {
                                             const cellVal = item[col.key];
                                             return (
                                                 <td
                                                     key={`${rowKey}-${col.key}`}
-                                                    className={`px-4 py-3 text-[var(--ink)] ${
+                                                    className={`px-4 py-3 text-(--ink) ${
                                                         col.align === "right"
                                                              ? "text-right"
                                                             : col.align === "center"

@@ -6,7 +6,9 @@ pub mod mcp;
 pub mod models;
 pub mod state;
 
-use commands::auth::{get_current_user, get_local_session, login, logout};
+use commands::auth::{
+    check_setup_status, get_current_user, get_local_session, login, logout, setup_initial_admin,
+};
 use commands::intent::{execute_confirmed_intent, process_intent};
 use commands::tools::{call_authenticated_tool, get_mcp_tools};
 use intent::intent_resolver::IntentResolver;
@@ -48,6 +50,8 @@ pub fn run() {
             logout,
             get_current_user,
             get_local_session,
+            check_setup_status,
+            setup_initial_admin,
             get_mcp_tools,
             call_authenticated_tool,
             process_intent,

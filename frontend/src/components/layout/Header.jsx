@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { useLocation } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
@@ -22,23 +22,23 @@ function Header() {
     return (
         <header
             style={{ height: "var(--topbar-h)" }}
-            className="shrink-0 flex items-center justify-between px-6 bg-[var(--paper)] border-b border-[var(--line)] select-none z-10"
+            className="shrink-0 flex items-center justify-between px-6 bg-(--paper) border-b border-(--line) select-none z-10"
         >
             <div className="flex items-center gap-3">
-                <h1 className="font-display text-base font-bold tracking-tight text-[var(--ink)]">
+                <h1 className="font-display text-base font-bold tracking-tight text-(--ink)">
                     {title}
                 </h1>
             </div>
 
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-[var(--ink)]">
+                    <span className="text-sm font-medium text-(--ink)">
                         {user?.username}
                     </span>
                     <StatusBadge tone="default">{user?.role}</StatusBadge>
                 </div>
 
-                <div className="h-4 w-px bg-[var(--line)]" />
+                <div className="h-4 w-px bg-(--line)" />
 
                 <Button
                     variant="outline"
