@@ -25,6 +25,7 @@ export const productConfig = {
         unitPrice: z
             .number({ invalid_type_error: "Must be a valid number" })
             .min(0, "Unit price cannot be negative"),
+        isActive: z.boolean().optional().default(true),
     }),
     fields: [
         {
@@ -68,6 +69,13 @@ export const productConfig = {
             required: true,
             placeholder: "0.00",
         },
+        {
+            name: "isActive",
+            label: "Product Active Status",
+            type: "toggle",
+            required: false,
+            hint: "Active products can be ordered; inactive items are archived",
+        },
     ],
     defaultValues: {
         sku: "",
@@ -75,6 +83,7 @@ export const productConfig = {
         description: "",
         quantityAvailable: 0,
         unitPrice: 0,
+        isActive: true,
     },
 };
 

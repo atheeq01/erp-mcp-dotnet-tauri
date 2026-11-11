@@ -11,11 +11,12 @@ namespace SpilMcpServer.Tools;
 public static class InventoryTools
 {
     [McpServerTool(Name = "get_inventory")]
-    [Description("Returns active inventory items for an authenticated user.")]
+    [Description("Returns inventory items for an authenticated user. By default only active items are returned.")]
     public static async Task<string> GetInventory(
         string sessionToken,
         AppDbContext db,
-        SessionStore sessions)
+        SessionStore sessions,
+        bool includeInactive = false)
     {
         var user = await ToolAuthorization.GetActiveUserAsync(
             sessionToken, db, sessions);
@@ -38,9 +39,14 @@ public static class InventoryTools
             });
         }
 
-        var inventory = await db.Inventory
+        var query = db.Inventory
             .AsNoTracking()
-            .Where(i => i.IsActive)
+            .AsQueryable();
+
+        if (!includeInactive)
+            query = query.Where(i => i.IsActive);
+
+        var inventory = await query
             .OrderBy(i => i.Name)
             .Select(i => new
             {
@@ -49,7 +55,8 @@ public static class InventoryTools
                 i.Name,
                 i.Description,
                 i.QuantityAvailable,
-                i.UnitPrice
+                i.UnitPrice,
+                i.IsActive
             })
             .ToListAsync();
 

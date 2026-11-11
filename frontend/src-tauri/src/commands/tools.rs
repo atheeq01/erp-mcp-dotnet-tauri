@@ -1,3 +1,4 @@
+use crate::commands::intent::check_tool_permission;
 use crate::error::AppError;
 use crate::mcp::tool_router::execute_tool;
 use crate::state::McpState;
@@ -48,10 +49,28 @@ pub fn call_authenticated_tool(
         guard.clone()
     };
 
+    if let Some(user_session) = session.as_ref() {
+        if let Err(reason) = check_tool_permission(&user_session.role, &name) {
+            return Err(AppError::ValidationError(reason));
+        }
+    } else {
+        return Err(AppError::SessionError("Please log in to execute tools.".into()));
+    }
+
     let mut client = state
         .client
         .lock()
         .map_err(|e| AppError::McpError(e.to_string()))?;
 
-    execute_tool(&mut client, session.as_ref(), &tool_def, arguments)
+    let data = execute_tool(&mut client, session.as_ref(), &tool_def, arguments)?;
+
+    if data.get("success").and_then(Value::as_bool) == Some(false) {
+        let msg = data
+            .get("message")
+            .and_then(Value::as_str)
+            .unwrap_or("Operation failed verification.");
+        return Err(AppError::ExecutionError(msg.to_string()));
+    }
+
+    Ok(data)
 }

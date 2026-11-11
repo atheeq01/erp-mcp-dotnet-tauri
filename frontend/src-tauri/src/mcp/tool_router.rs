@@ -44,6 +44,15 @@ pub fn execute_tool(
             .token
             .clone();
 
+        if let Some(obj) = arguments.as_object_mut() {
+            if let Some(items_val) = obj.get("itemsJson") {
+                if items_val.is_array() || items_val.is_object() {
+                    let s = items_val.to_string();
+                    obj.insert("itemsJson".to_string(), json!(s));
+                }
+            }
+        }
+
         validate_parameters(tool, &arguments)?;
 
         if let Some(obj) = arguments.as_object_mut() {

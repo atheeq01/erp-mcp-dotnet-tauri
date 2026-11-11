@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Plus, Trash2, AlertCircle, CheckCircle2 } from "lucide-react";
 import TextField from "./fields/TextField";
 import NumberField from "./fields/NumberField";
@@ -117,9 +117,9 @@ function EntityForm({
 
     const orderGrandTotal = (values.items || []).reduce((acc, itm) => {
         const prod = availableProducts.find(
-            (p) => String(p.id ?? p.Id) === String(itm.inventoryId)
+            (p) => String(p.id) === String(itm.inventoryId)
         );
-        const price = Number(prod?.unitPrice ?? prod?.UnitPrice ?? 0);
+        const price = Number(prod?.unitPrice ?? 0);
         const qty = Number(itm.quantity || 0);
         return acc + price * qty;
     }, 0);
@@ -127,18 +127,18 @@ function EntityForm({
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             {submitError && (
-                <div className="p-3 border border-[var(--accent)] bg-[color-mix(in_srgb,var(--paper)_70%,white)] rounded-[2px] flex items-start gap-2.5">
-                    <AlertCircle className="h-4 w-4 text-[var(--accent)] shrink-0 mt-0.5" strokeWidth={1.5} />
-                    <span className="text-xs text-[var(--ink)] leading-relaxed">
+                <div className="p-3 border border-(--accent) bg-[color-mix(in_srgb,var(--paper)_70%,white)] rounded-xs flex items-start gap-2.5">
+                    <AlertCircle className="h-4 w-4 text-(--accent) shrink-0 mt-0.5" strokeWidth={1.5} />
+                    <span className="text-xs text-(--ink) leading-relaxed">
                         {submitError}
                     </span>
                 </div>
             )}
 
             {submitSuccess && (
-                <div className="p-3 border border-[var(--ink)] bg-[var(--paper)] rounded-[2px] flex items-start gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 text-[var(--ink)] shrink-0 mt-0.5" strokeWidth={1.5} />
-                    <span className="text-xs text-[var(--ink)] leading-relaxed">
+                <div className="p-3 border border-(--ink) bg-(--paper) rounded-xs flex items-start gap-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-(--ink) shrink-0 mt-0.5" strokeWidth={1.5} />
+                    <span className="text-xs text-(--ink) leading-relaxed">
                         {submitSuccess}
                     </span>
                 </div>
@@ -234,13 +234,52 @@ function EntityForm({
                             />
                         );
 
+                    case "toggle":
+                    case "checkbox":
+                        return (
+                            <div
+                                key={field.name}
+                                className="flex items-center justify-between p-3 bg-(--paper) border border-(--line) rounded-xs"
+                            >
+                                <div>
+                                    <span className="text-xs uppercase tracking-wider font-semibold text-[color-mix(in_srgb,var(--ink)_80%,white)] block">
+                                        {field.label}
+                                    </span>
+                                    {field.hint && (
+                                        <span className="text-xs text-[color-mix(in_srgb,var(--ink)_50%,white)] block mt-0.5">
+                                            {field.hint}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-mono font-semibold text-(--ink)">
+                                        {val ? "Active" : "Inactive"}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleFieldChange(field.name, !val)}
+                                        className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors ${
+                                            val ? "bg-(--accent)" : "bg-[color-mix(in_srgb,var(--ink)_25%,white)]"
+                                        }`}
+                                        disabled={field.disabled || isSubmitting}
+                                    >
+                                        <span
+                                            className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                                                val ? "translate-x-4" : "translate-x-0"
+                                            }`}
+                                        />
+                                    </button>
+                                </div>
+                            </div>
+                        );
+
                     case "order-items":
                         return (
-                            <div key={field.name} className="space-y-3 pt-2 border-t border-[var(--line)]">
+                            <div key={field.name} className="space-y-3 pt-2 border-t border-(--line)">
                                 <div className="flex items-center justify-between">
                                     <label className="text-xs uppercase tracking-wider font-semibold text-[color-mix(in_srgb,var(--ink)_80%,white)]">
                                         {field.label}
-                                        {field.required && <span className="text-[var(--accent)] ml-1">*</span>}
+                                        {field.required && <span className="text-(--accent) ml-1">*</span>}
                                     </label>
                                     <Button
                                         type="button"
@@ -255,7 +294,7 @@ function EntityForm({
                                 </div>
 
                                 {err && (
-                                    <p className="text-xs text-[var(--accent)] font-medium">
+                                    <p className="text-xs text-(--accent) font-medium">
                                         {err}
                                     </p>
                                 )}
@@ -263,16 +302,16 @@ function EntityForm({
                                 <div className="space-y-2">
                                     {(values.items || []).map((itm, idx) => {
                                         const selectedProd = availableProducts.find(
-                                            (p) => String(p.id ?? p.Id) === String(itm.inventoryId)
+                                            (p) => String(p.id) === String(itm.inventoryId)
                                         );
-                                        const unitPrice = selectedProd?.unitPrice ?? selectedProd?.UnitPrice ?? 0;
-                                        const stockAvailable = selectedProd?.quantityAvailable ?? selectedProd?.QuantityAvailable ?? 0;
+                                        const unitPrice = selectedProd?.unitPrice ?? 0;
+                                        const stockAvailable = selectedProd?.quantityAvailable ?? 0;
                                         const lineTotal = Number(unitPrice) * Number(itm.quantity || 0);
 
                                         return (
                                             <div
                                                 key={idx}
-                                                className="p-3 bg-[var(--paper)] border border-[var(--line)] rounded-[2px] space-y-2"
+                                                className="p-3 bg-(--paper) border border-(--line) rounded-xs space-y-2"
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <span className="font-mono text-xs font-semibold uppercase text-[color-mix(in_srgb,var(--ink)_70%,white)]">
@@ -281,7 +320,7 @@ function EntityForm({
                                                     <button
                                                         type="button"
                                                         onClick={() => removeOrderItem(idx)}
-                                                        className="p-1 text-[color-mix(in_srgb,var(--ink)_50%,white)] hover:text-[var(--accent)] transition-colors"
+                                                        className="p-1 text-[color-mix(in_srgb,var(--ink)_50%,white)] hover:text-(--accent) transition-colors"
                                                         title="Remove item"
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
@@ -294,8 +333,8 @@ function EntityForm({
                                                             value={itm.inventoryId}
                                                             onChange={(val) => handleOrderItemChange(idx, "inventoryId", val)}
                                                             options={availableProducts.map((p) => ({
-                                                                value: p.id ?? p.Id,
-                                                                label: `${p.sku ?? p.SKU} - ${p.name ?? p.Name} ($${Number(p.unitPrice ?? p.UnitPrice).toFixed(2)})`,
+                                                                value: p.id,
+                                                                label: `${p.sku} - ${p.name} ($${Number(p.unitPrice ?? 0).toFixed(2)})`,
                                                             }))}
                                                             placeholder="Select product..."
                                                             required
@@ -321,7 +360,7 @@ function EntityForm({
                                                         <span>
                                                             Unit: ${Number(unitPrice).toFixed(2)} | Avail: {stockAvailable}
                                                         </span>
-                                                        <span className="font-semibold text-[var(--ink)]">
+                                                        <span className="font-semibold text-(--ink)">
                                                             Line Total: ${lineTotal.toFixed(2)}
                                                         </span>
                                                     </div>
@@ -331,11 +370,11 @@ function EntityForm({
                                     })}
                                 </div>
 
-                                <div className="mt-2 p-3 bg-white border border-[var(--line)] rounded-[2px] flex items-center justify-between">
+                                <div className="mt-2 p-3 bg-white border border-(--line) rounded-xs flex items-center justify-between">
                                     <span className="text-xs uppercase tracking-wider font-semibold text-[color-mix(in_srgb,var(--ink)_75%,white)]">
                                         Estimated Order Total:
                                     </span>
-                                    <span className="font-mono text-base font-bold tabular-nums text-[var(--ink)]">
+                                    <span className="font-mono text-base font-bold tabular-nums text-(--ink)">
                                         ${orderGrandTotal.toFixed(2)}
                                     </span>
                                 </div>
@@ -347,7 +386,7 @@ function EntityForm({
                 }
             })}
 
-            <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-[var(--line)]">
+            <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-(--line)">
                 {onCancel && (
                     <Button
                         variant="outline"

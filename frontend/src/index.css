@@ -62,7 +62,6 @@ h1, h2, h3, h4, h5, h6, .font-display {
   font-family: var(--font-display), sans-serif;
   letter-spacing: -0.025em;
   font-weight: 700;
-  color: var(--ink);
 }
 
 .page-title {
@@ -71,7 +70,6 @@ h1, h2, h3, h4, h5, h6, .font-display {
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: var(--ink);
 }
 
 .font-mono, [data-mono], code, pre, .tabular-nums {
