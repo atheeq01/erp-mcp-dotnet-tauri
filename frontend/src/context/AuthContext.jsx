@@ -1,9 +1,5 @@
-
 import { createContext, useState } from "react";
-import {
-    loginUser,
-    logoutUser,
-} from "../services/mcpService";
+import { loginUser, logoutUser } from "../services/mcpService";
 
 export const AuthContext = createContext(null);
 

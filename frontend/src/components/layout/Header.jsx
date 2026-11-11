@@ -1,47 +1,54 @@
-
+import React from "react";
+import { useLocation } from "react-router-dom";
+import { LogOut } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import StatusBadge from "../common/StatusBadge";
+import Button from "../common/Button";
+
+const pageTitles = {
+    "/dashboard": "Operational Dashboard",
+    "/inventory": "Inventory Control",
+    "/orders": "Customer Orders",
+    "/users": "User Administration",
+    "/chat": "AI Operations Assistant",
+};
 
 function Header() {
     const { user, logout } = useAuth();
+    const location = useLocation();
 
-    async function handleLogout() {
-        await logout();
-    }
+    const title = pageTitles[location.pathname] || "SPIL Control Panel";
 
     return (
-        <header className="flex h-20 items-center justify-between border-b border-slate-200 bg-white px-8">
-
-            <div>
-                <h2 className="text-lg font-semibold text-slate-800">
-                    Welcome to SPIL ERP
-                </h2>
-
-                <p className="text-sm text-slate-500">
-                    Manage your business operations
-                </p>
+        <header
+            style={{ height: "var(--topbar-h)" }}
+            className="shrink-0 flex items-center justify-between px-6 bg-[var(--paper)] border-b border-[var(--line)] select-none z-10"
+        >
+            <div className="flex items-center gap-3">
+                <h1 className="font-display text-base font-bold tracking-tight text-[var(--ink)]">
+                    {title}
+                </h1>
             </div>
 
             <div className="flex items-center gap-4">
-                <div className="text-right">
-                    <p className="text-sm font-semibold text-slate-800">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-[var(--ink)]">
                         {user?.username}
-                    </p>
-
-                    <p className="text-xs text-green-700">
-                        {user?.role}
-                    </p>
+                    </span>
+                    <StatusBadge tone="default">{user?.role}</StatusBadge>
                 </div>
 
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 font-bold text-green-800">
-                    {user?.username?.charAt(0).toUpperCase()}
-                </div>
+                <div className="h-4 w-px bg-[var(--line)]" />
 
-                <button
-                    onClick={handleLogout}
-                    className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                <Button
+                    variant="outline"
+                    size="sm"
+                    icon={LogOut}
+                    onClick={logout}
+                    title="Terminate session"
                 >
                     Logout
-                </button>
+                </Button>
             </div>
         </header>
     );

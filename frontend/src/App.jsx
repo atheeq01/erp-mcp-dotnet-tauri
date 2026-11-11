@@ -1,22 +1,27 @@
-
-import {
-    BrowserRouter,
-    Routes,
-    Route,
-    Navigate,
-} from "react-router-dom";
-
+import React, { Suspense, lazy } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { ChatProvider } from "./context/ChatContext";
 import { useAuth } from "./hooks/useAuth";
-
 import AppLayout from "./components/layout/AppLayout";
+import Skeleton from "./components/common/Skeleton";
 
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Inventory from "./pages/Inventory";
-import Orders from "./pages/Orders";
-import Users from "./pages/Users";
-import Chat from "./pages/Chat";
+const Login = lazy(() => import("./pages/Login"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Inventory = lazy(() => import("./pages/Inventory"));
+const Orders = lazy(() => import("./pages/Orders"));
+const Users = lazy(() => import("./pages/Users"));
+const Chat = lazy(() => import("./pages/Chat"));
+
+function RouteSkeleton() {
+    return (
+        <div className="p-6 space-y-4">
+            <Skeleton height="32px" width="240px" />
+            <Skeleton height="48px" width="100%" />
+            <Skeleton height="260px" width="100%" />
+        </div>
+    );
+}
 
 function ProtectedRoute({ children, roles }) {
     const { user } = useAuth();
@@ -44,65 +49,67 @@ function PublicRoute({ children }) {
 
 function AppRoutes() {
     return (
-        <Routes>
-            <Route
-                path="/login"
-                element={
-                    <PublicRoute>
-                        <Login />
-                    </PublicRoute>
-                }
-            />
-
-            <Route
-                element={
-                    <ProtectedRoute>
-                        <AppLayout />
-                    </ProtectedRoute>
-                }
-            >
-                <Route path="/dashboard" element={<Dashboard />} />
-
+        <Suspense fallback={<RouteSkeleton />}>
+            <Routes>
                 <Route
-                    path="/inventory"
+                    path="/login"
                     element={
-                        <ProtectedRoute roles={["Admin", "Sales", "Store"]}>
-                            <Inventory />
-                        </ProtectedRoute>
+                        <PublicRoute>
+                            <Login />
+                        </PublicRoute>
                     }
                 />
 
                 <Route
-                    path="/orders"
                     element={
-                        <ProtectedRoute roles={["Admin", "Sales"]}>
-                            <Orders />
+                        <ProtectedRoute>
+                            <AppLayout />
                         </ProtectedRoute>
                     }
-                />
+                >
+                    <Route path="/dashboard" element={<Dashboard />} />
 
-                <Route
-                    path="/users"
-                    element={
-                        <ProtectedRoute roles={["Admin"]}>
-                            <Users />
-                        </ProtectedRoute>
-                    }
-                />
+                    <Route
+                        path="/inventory"
+                        element={
+                            <ProtectedRoute roles={["Admin", "Sales", "Store"]}>
+                                <Inventory />
+                            </ProtectedRoute>
+                        }
+                    />
 
-                <Route
-                    path="/chat"
-                    element={
-                        <ProtectedRoute roles={["Admin", "Sales", "Store"]}>
-                            <Chat />
-                        </ProtectedRoute>
-                    }
-                />
-            </Route>
+                    <Route
+                        path="/orders"
+                        element={
+                            <ProtectedRoute roles={["Admin", "Sales"]}>
+                                <Orders />
+                            </ProtectedRoute>
+                        }
+                    />
 
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+                    <Route
+                        path="/users"
+                        element={
+                            <ProtectedRoute roles={["Admin"]}>
+                                <Users />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/chat"
+                        element={
+                            <ProtectedRoute roles={["Admin", "Sales", "Store"]}>
+                                <Chat />
+                            </ProtectedRoute>
+                        }
+                    />
+                </Route>
+
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+        </Suspense>
     );
 }
 
@@ -110,7 +117,9 @@ function App() {
     return (
         <BrowserRouter>
             <AuthProvider>
-                <AppRoutes />
+                <ChatProvider>
+                    <AppRoutes />
+                </ChatProvider>
             </AuthProvider>
         </BrowserRouter>
     );

@@ -1,10 +1,109 @@
+@import "@fontsource/bricolage-grotesque/400.css";
+@import "@fontsource/bricolage-grotesque/600.css";
+@import "@fontsource/bricolage-grotesque/700.css";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/jetbrains-mono/700.css";
+
 @import "tailwindcss";
 
-@theme {
-    --font-sans: "Inter", sans-serif;
+:root {
+  --ink: #000000;
+  --accent: #CB2957;
+  --line: #DDDDDD;
+  --paper: #EEEEEE;
+  --surface: #FFFFFF;
+
+  --font-display: "Bricolage Grotesque", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-ui: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --radius: 2px;
+  --radius-md: 4px;
+
+  --sidebar-w: 15.55rem;
+  --nav-item-h: 3.11rem;
+  --nav-item-text: 0.94rem;
+  --table-row-h: 3.55rem;
+  --table-body-text: 0.83rem;
+  --input-btn-h: 2.66rem;
+  --icon-size: 1.22rem;
+  --chat-input-h: 3.11rem;
+  --drawer-w: 28.88rem;
+  --page-title-text: 1.77rem;
+  --label-small: 0.77rem;
+  --topbar-h: 3.33rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 18px;
 }
 
 body {
-    margin: 0;
-    font-family: var(--font-sans);
+  margin: 0;
+  padding: 0;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui), sans-serif;
+  font-size: 0.83rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.page-title {
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--page-title-text);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.font-mono, [data-mono], code, pre, .tabular-nums {
+  font-family: var(--font-mono), monospace;
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.label-caps {
+  font-size: var(--label-small);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--ink) 65%, white 35%);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--paper);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--line) 70%, var(--ink) 30%);
 }

@@ -1,0 +1,10 @@
+pub const MODEL_DIR: &str = "resources/models/all-MiniLM-L6-v2";
+pub const MODEL_FILE_NAME: &str = "model.onnx";
+pub const TOKENIZER_FILE_NAME: &str = "tokenizer.json";
+pub const EMBEDDING_DIM: usize = 384;
+pub const REGEX_WEIGHT: f64 = 0.50;
+pub const SEMANTIC_WEIGHT: f64 = 0.50;
+pub const HIGH_CONFIDENCE_THRESHOLD: f64 = 0.65;
+pub const MINIMUM_MATCH_THRESHOLD: f64 = 0.35;
+pub const AMBIGUITY_DELTA_THRESHOLD: f64 = 0.08;
+pub const REQUIRE_MUTATION_CONFIRMATION: bool = true;

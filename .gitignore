@@ -30,6 +30,10 @@ appsettings.Development.json
 .DS_Store
 Thumbs.db
 
+# AI & ML model weights (>90MB)
+*.onnx
+**/resources/models/
+
 # AI Agents & Gemini / Antigravity
 .agents/
 **/.agents/

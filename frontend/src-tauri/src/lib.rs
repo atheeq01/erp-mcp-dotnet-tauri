@@ -1,202 +1,57 @@
+pub mod commands;
+pub mod config;
+pub mod error;
+pub mod intent;
+pub mod mcp;
+pub mod models;
+pub mod state;
 
-mod mcp;
-
-use mcp::McpClient;
-use serde_json::{json, Value};
+use commands::auth::{get_current_user, get_local_session, login, logout};
+use commands::intent::{execute_confirmed_intent, process_intent};
+use commands::tools::{call_authenticated_tool, get_mcp_tools};
+use intent::intent_resolver::IntentResolver;
+use intent::semantic_engine::SemanticEngine;
+use mcp::client::McpClient;
+use mcp::tool_router::fetch_tool_definitions;
+use state::McpState;
 use std::sync::Mutex;
-use tauri::{Manager, State};
-
-struct UserSession {
-    token: String,
-    username: String,
-    role: String,
-}
-
-struct McpState {
-    client: Mutex<McpClient>,
-    session: Mutex<Option<UserSession>>,
-}
-
-fn extract_tool_data(result: Value) -> Result<Value, String> {
-    if result.get("isError").and_then(Value::as_bool) == Some(true) {
-        return Err("MCP tool returned an error".to_string());
-    }
-
-    if let Some(data) = result.get("structuredContent") {
-        return Ok(data.clone());
-    }
-
-    if let Some(contents) = result.get("content").and_then(Value::as_array) {
-        for item in contents {
-            if let Some(text) = item.get("text").and_then(Value::as_str) {
-                if let Ok(data) = serde_json::from_str::<Value>(text) {
-                    return Ok(data);
-                }
-
-                return Ok(json!({ "message": text }));
-            }
-        }
-    }
-
-    Ok(result)
-}
-
-#[tauri::command]
-fn login(
-    username: String,
-    password: String,
-    state: State<'_, McpState>,
-) -> Result<Value, String> {
-    let mut client = state.client.lock().map_err(|e| e.to_string())?;
-
-    let result = client.call_tool(
-        "login",
-        json!({
-            "username": username,
-            "password": password
-        }),
-    )?;
-
-    let data = extract_tool_data(result)?;
-
-    if data.get("success").and_then(Value::as_bool) == Some(false) {
-        let error_message = data
-            .get("message")
-            .and_then(Value::as_str)
-            .unwrap_or("Invalid username or password");
-        return Err(error_message.to_string());
-    }
-
-    let token = data
-        .get("sessionToken")
-        .and_then(Value::as_str)
-        .ok_or("Login failed: session token was not returned")?
-        .to_string();
-
-    let username = data
-        .get("username")
-        .and_then(Value::as_str)
-        .unwrap_or("")
-        .to_string();
-
-    let role = data
-        .get("role")
-        .and_then(Value::as_str)
-        .unwrap_or("")
-        .to_string();
-
-    let mut session = state.session.lock().map_err(|e| e.to_string())?;
-
-    *session = Some(UserSession {
-        token,
-        username,
-        role,
-    });
-
-    Ok(json!({
-        "success": true,
-        "username": session.as_ref().unwrap().username,
-        "role": session.as_ref().unwrap().role
-    }))
-}
-
-// Get the current logged-in user's details.
-#[tauri::command]
-fn get_current_user(
-    state: State<'_, McpState>,
-) -> Result<Value, String> {
-    let session = state.session.lock().map_err(|e| e.to_string())?;
-
-    let session = session.as_ref().ok_or("Please login first")?;
-
-    let mut client = state.client.lock().map_err(|e| e.to_string())?;
-
-    let result = client.call_tool(
-        "get_current_user",
-        json!({
-            "sessionToken": session.token
-        }),
-    )?;
-
-    extract_tool_data(result)
-}
-
-// Call any authenticated MCP tool.
-// Rust automatically adds the session token.
-#[tauri::command]
-fn call_authenticated_tool(
-    name: String,
-    mut arguments: Value,
-    state: State<'_, McpState>,
-) -> Result<Value, String> {
-    let session = state.session.lock().map_err(|e| e.to_string())?;
-
-    let session = session.as_ref().ok_or("Please login first")?;
-
-    if !arguments.is_object() {
-        return Err("Tool arguments must be a JSON object".to_string());
-    }
-
-    arguments["sessionToken"] = json!(session.token);
-
-    let mut client = state.client.lock().map_err(|e| e.to_string())?;
-
-    let result = client.call_tool(&name, arguments)?;
-
-    extract_tool_data(result)
-}
-
-#[tauri::command]
-fn call_mcp_tool(
-    name: String,
-    arguments: Value,
-    state: State<'_, McpState>,
-) -> Result<Value, String> {
-    call_authenticated_tool(name, arguments, state)
-}
-
-// Clear the local desktop session.
-#[tauri::command]
-fn logout(state: State<'_, McpState>) -> Result<(), String> {
-    let mut session = state.session.lock().map_err(|e| e.to_string())?;
-
-    *session = None;
-
-    Ok(())
-}
-
-// Discover available MCP tools.
-#[tauri::command]
-fn get_mcp_tools(
-    state: State<'_, McpState>,
-) -> Result<Value, String> {
-    let mut client = state.client.lock().map_err(|e| e.to_string())?;
-
-    client.list_tools()
-}
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            let client = McpClient::start()
-                .map_err(std::io::Error::other)?;
+            let mut client = McpClient::start().map_err(std::io::Error::other)?;
+            let initial_tools = fetch_tool_definitions(&mut client).unwrap_or_else(|_| Vec::new());
+
+            let semantic_engine = match SemanticEngine::find_and_load() {
+                Ok(engine) => Some(engine),
+                Err(err) => {
+                    eprintln!("Warning: ONNX semantic model could not be loaded: {err}. Falling back to regex engine.");
+                    None
+                }
+            };
 
             app.manage(McpState {
                 client: Mutex::new(client),
                 session: Mutex::new(None),
+                tools: Mutex::new(initial_tools),
+                model: semantic_engine,
+                resolver: IntentResolver::new(),
             });
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             login,
-            get_current_user,
-            call_authenticated_tool,
-            call_mcp_tool,
             logout,
-            get_mcp_tools
+            get_current_user,
+            get_local_session,
+            get_mcp_tools,
+            call_authenticated_tool,
+            process_intent,
+            execute_confirmed_intent
         ])
         .run(tauri::generate_context!())
         .expect("Error running SPIL Mini ERP");

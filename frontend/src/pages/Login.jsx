@@ -1,8 +1,9 @@
-
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AlertCircle, ArrowRight } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-import Input from "../components/common/Input";
+import TextField from "../components/forms/fields/TextField";
+import PasswordField from "../components/forms/fields/PasswordField";
 import Button from "../components/common/Button";
 
 function Login() {
@@ -13,112 +14,115 @@ function Login() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
-    async function handleSubmit(event) {
-        event.preventDefault();
+    async function handleSubmit(e) {
+        e.preventDefault();
         setError("");
 
+        if (!username.trim() || !password) {
+            setError("Please enter both username and password.");
+            return;
+        }
+
         try {
-            await login(username, password);
+            await login(username.trim(), password);
             navigate("/dashboard");
         } catch (err) {
-            setError(err?.message || String(err));
+            setError(err?.message || "Authentication failed. Check credentials.");
         }
     }
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
-
-            <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-xl md:grid-cols-2">
-
-                {/* Left panel */}
-                <section className="hidden flex-col justify-between bg-green-900 p-12 text-white md:flex">
-
+        <main className="min-h-screen w-screen flex items-center justify-center bg-[var(--paper)] p-4 sm:p-8">
+            <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 bg-white border border-[var(--line)] rounded-[2px] overflow-hidden">
+                <section className="bg-[var(--ink)] text-white p-8 sm:p-12 flex flex-col justify-between border-b md:border-b-0 md:border-r border-[var(--line)]">
                     <div>
-                        <div className="mb-12 flex items-center gap-3">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-xl font-bold text-green-900">
-                                S
-                            </div>
-
-                            <span className="text-xl font-bold">
-                                SPIL Mini ERP
+                        <div className="flex items-center gap-3">
+                            <span className="font-display text-base font-extrabold tracking-tight text-white">
+                                SPIL MINI ERP
                             </span>
+                            <span className="h-2 w-2 rounded-[2px] bg-[var(--accent)]" />
                         </div>
 
-                        <h1 className="text-4xl font-bold leading-tight">
-                            Manage your business operations in one place.
-                        </h1>
-
-                        <p className="mt-5 leading-7 text-green-100">
-                            Manage inventory, orders and users through
-                            a simple desktop application.
-                        </p>
+                        <div className="mt-12 space-y-4">
+                            <span className="text-xs uppercase font-mono tracking-widest text-[color-mix(in_srgb,var(--line)_50%,black)]">
+                                Enterprise Terminal
+                            </span>
+                            <h1 className="font-display text-3xl font-bold tracking-tight text-white leading-tight">
+                                Confident, quiet control for your business.
+                            </h1>
+                            <p className="text-sm text-[var(--line)] leading-relaxed max-w-sm">
+                                Inventory tracking, atomic order processing, and user administration built for local desktop reliability.
+                            </p>
+                        </div>
                     </div>
 
-                    <p className="text-sm text-green-200">
-                        Secure ERP Management System
-                    </p>
+                    <div className="pt-12 text-xs font-mono text-[color-mix(in_srgb,var(--line)_50%,black)] flex items-center justify-between">
+                        <span>Offline First · Tauri Core</span>
+                        <span>v1.0</span>
+                    </div>
                 </section>
 
-                {/* Login form */}
-                <section className="flex items-center justify-center p-8 sm:p-12">
-
-                    <div className="w-full max-w-sm">
-
-                        <div className="mb-8">
-                            <p className="text-sm font-semibold uppercase tracking-wider text-green-700">
-                                Welcome back
-                            </p>
-
-                            <h2 className="mt-2 text-3xl font-bold text-slate-900">
-                                Sign in
+                <section className="p-8 sm:p-12 flex flex-col justify-center bg-white">
+                    <div className="max-w-sm w-full mx-auto space-y-6">
+                        <div className="border-b border-[var(--line)] pb-3">
+                            <span className="label-caps">Operator Authentication</span>
+                            <h2 className="font-display text-xl font-bold tracking-tight text-[var(--ink)] mt-0.5">
+                                Sign In
                             </h2>
-
-                            <p className="mt-2 text-sm text-slate-500">
-                                Enter your account details to continue.
-                            </p>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-5">
+                        {error && (
+                            <div className="flex items-start gap-2 p-3 border border-[var(--accent)] bg-white text-xs text-[var(--accent)] rounded-[2px]">
+                                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" strokeWidth={1.5} />
+                                <span>{error}</span>
+                            </div>
+                        )}
 
-                            <Input
-                                label="Username"
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <TextField
+                                id="login-username"
+                                name="username"
+                                label="Operator Username"
                                 value={username}
-                                onChange={setUsername}
-                                placeholder="Enter your username"
+                                onChange={(val) => setUsername(val)}
+                                placeholder="e.g. admin or store_user"
+                                required
                                 autoComplete="username"
-                                required
+                                disabled={loading}
                             />
 
-                            <Input
-                                label="Password"
-                                type="password"
+                            <PasswordField
+                                id="login-password"
+                                name="password"
+                                label="Account Password"
                                 value={password}
-                                onChange={setPassword}
-                                placeholder="Enter your password"
-                                autoComplete="current-password"
+                                onChange={(val) => setPassword(val)}
+                                placeholder="Enter password"
                                 required
+                                autoComplete="current-password"
+                                disabled={loading}
                             />
 
-                            {error && (
-                                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                                    {error}
-                                </div>
-                            )}
-
-                            <Button
-                                type="submit"
-                                loading={loading}
-                                disabled={!username.trim() || !password}
-                            >
-                                Sign in to your account
-                            </Button>
-
+                            <div className="pt-2">
+                                <Button
+                                    type="submit"
+                                    variant="primary"
+                                    size="lg"
+                                    fullWidth
+                                    loading={loading}
+                                    icon={ArrowRight}
+                                    disabled={!username.trim() || !password}
+                                >
+                                    Authenticate & Enter
+                                </Button>
+                            </div>
                         </form>
 
-                        <p className="mt-8 text-center text-xs text-slate-400">
-                            SPIL Mini ERP · Secure Desktop Application
-                        </p>
-
+                        <div className="pt-4 border-t border-[var(--line)] text-center">
+                            <p className="text-xs text-[color-mix(in_srgb,var(--ink)_50%,white)] font-mono">
+                                Authenticated via local .NET MCP micro-daemon
+                            </p>
+                        </div>
                     </div>
                 </section>
             </div>
