@@ -33,12 +33,36 @@ function Dashboard() {
                 callMcpTool("get_orders").catch(() => []),
             ]);
 
-            const invList = Array.isArray(invRes)
+            const rawInv = Array.isArray(invRes)
                 ? invRes
                 : invRes.inventory ?? invRes.items ?? [];
-            const ordList = Array.isArray(ordRes)
+            const invList = rawInv.map((item) => ({
+                id: item.id ?? item.Id,
+                sku: item.sku ?? item.SKU ?? "",
+                name: item.name ?? item.Name ?? "",
+                description: item.description ?? item.Description ?? "",
+                quantityAvailable: Number(item.quantityAvailable ?? item.QuantityAvailable ?? 0),
+                unitPrice: Number(item.unitPrice ?? item.UnitPrice ?? 0),
+                isActive: Boolean(item.isActive ?? item.IsActive ?? true),
+            }));
+
+            const rawOrd = Array.isArray(ordRes)
                 ? ordRes
                 : ordRes.orders ?? ordRes.items ?? [];
+            const ordList = rawOrd.map((o) => ({
+                id: o.id ?? o.Id,
+                orderNumber: o.orderNumber ?? o.OrderNumber ?? "—",
+                username: o.username ?? o.Username ?? o.userId ?? o.UserId ?? "—",
+                totalAmount: Number(o.totalAmount ?? o.TotalAmount ?? 0),
+                createdAtUtc: o.createdAtUtc ?? o.CreatedAtUtc,
+                items: (o.items ?? o.Items ?? []).map((i) => ({
+                    inventoryId: i.inventoryId ?? i.InventoryId,
+                    productName: i.productName ?? i.ProductName ?? "—",
+                    quantity: Number(i.quantity ?? i.Quantity ?? 0),
+                    unitPrice: Number(i.unitPrice ?? i.UnitPrice ?? 0),
+                    totalPrice: Number(i.totalPrice ?? i.TotalPrice ?? 0),
+                })),
+            }));
 
             setInventory(invList);
             setOrders(ordList);

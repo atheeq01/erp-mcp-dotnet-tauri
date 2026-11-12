@@ -27,9 +27,18 @@ function Inventory() {
 
         try {
             const result = await callMcpTool("get_inventory", { includeInactive: true });
-            const inventory = Array.isArray(result)
+            const rawInventory = Array.isArray(result)
                 ? result
                 : result.inventory ?? result.items ?? [];
+            const inventory = rawInventory.map((item) => ({
+                id: item.id ?? item.Id,
+                sku: item.sku ?? item.SKU ?? "",
+                name: item.name ?? item.Name ?? "",
+                description: item.description ?? item.Description ?? "",
+                quantityAvailable: Number(item.quantityAvailable ?? item.QuantityAvailable ?? 0),
+                unitPrice: Number(item.unitPrice ?? item.UnitPrice ?? 0),
+                isActive: Boolean(item.isActive ?? item.IsActive ?? true),
+            }));
             setItems(inventory);
         } catch (err) {
             setError(err?.message || "Failed to load inventory products.");
@@ -50,12 +59,12 @@ function Inventory() {
     function handleEditOpen(item) {
         setEditingItem({
             id: item.id ?? item.Id,
-            sku: item.sku ?? "",
-            name: item.name ?? "",
-            description: item.description ?? "",
-            quantityAvailable: Number(item.quantityAvailable ?? 0),
-            unitPrice: Number(item.unitPrice ?? 0),
-            isActive: item.isActive ?? true,
+            sku: item.sku ?? item.SKU ?? "",
+            name: item.name ?? item.Name ?? "",
+            description: item.description ?? item.Description ?? "",
+            quantityAvailable: Number(item.quantityAvailable ?? item.QuantityAvailable ?? 0),
+            unitPrice: Number(item.unitPrice ?? item.UnitPrice ?? 0),
+            isActive: item.isActive ?? item.IsActive ?? true,
         });
         setDrawerOpen(true);
     }
@@ -110,11 +119,11 @@ function Inventory() {
             } else if (type === "reactivate") {
                 await callMcpTool("update_inventory", {
                     inventoryId: id,
-                    sku: item.sku,
-                    name: item.name,
-                    description: item.description ?? "",
-                    quantityAvailable: Number(item.quantityAvailable ?? 0),
-                    unitPrice: Number(item.unitPrice ?? 0),
+                    sku: item.sku ?? item.SKU,
+                    name: item.name ?? item.Name,
+                    description: item.description ?? item.Description ?? "",
+                    quantityAvailable: Number(item.quantityAvailable ?? item.QuantityAvailable ?? 0),
+                    unitPrice: Number(item.unitPrice ?? item.UnitPrice ?? 0),
                     isActive: true,
                 });
             }
@@ -132,14 +141,14 @@ function Inventory() {
     const totalUnits = useMemo(
         () =>
             items.reduce(
-                (sum, i) => sum + Number(i.quantityAvailable ?? 0),
+                (sum, i) => sum + Number(i.quantityAvailable ?? i.QuantityAvailable ?? 0),
                 0
             ),
         [items]
     );
 
     const activeCount = useMemo(
-        () => items.filter((i) => (i.isActive ?? true)).length,
+        () => items.filter((i) => (i.isActive ?? i.IsActive ?? true)).length,
         [items]
     );
 
@@ -151,7 +160,7 @@ function Inventory() {
             width: "160px",
             render: (val, row) => (
                 <span className="font-mono font-medium text-(--ink)">
-                    {val ?? row.sku ?? "—"}
+                    {val || row.sku || row.SKU || "—"}
                 </span>
             ),
         },
@@ -160,11 +169,12 @@ function Inventory() {
             header: "Product Specification",
             sortable: true,
             render: (val, row) => {
-                const desc = row.description ?? row.description;
+                const name = val || row.name || row.Name || "—";
+                const desc = row.description || row.Description;
                 return (
                     <div>
                         <span className="font-semibold text-(--ink) block">
-                            {val ?? row.name}
+                            {name}
                         </span>
                         {desc && (
                             <span className="text-xs text-[color-mix(in_srgb,var(--ink)_50%,white)] line-clamp-1">
@@ -182,7 +192,7 @@ function Inventory() {
             align: "right",
             width: "120px",
             render: (val, row) => {
-                const qty = Number(val ?? row.quantityAvailable ?? 0);
+                const qty = Number(val ?? row.quantityAvailable ?? row.QuantityAvailable ?? 0);
                 const isLow = qty <= 20;
                 return (
                     <span
@@ -202,7 +212,7 @@ function Inventory() {
             align: "right",
             width: "120px",
             render: (val, row) => {
-                const price = Number(val ?? row.unitPrice ?? 0);
+                const price = Number(val ?? row.unitPrice ?? row.UnitPrice ?? 0);
                 return (
                     <span className="font-mono tabular-nums text-(--ink)">
                         ${price.toFixed(2)}
@@ -216,7 +226,7 @@ function Inventory() {
             align: "center",
             width: "100px",
             render: (val, row) => {
-                const active = val ?? row.isActive ?? true;
+                const active = val ?? row.isActive ?? row.IsActive ?? true;
                 return (
                     <StatusBadge tone={active ? "default" : "attention"}>
                         {active ? "Active" : "Inactive"}
@@ -327,7 +337,7 @@ function Inventory() {
                 error={error}
                 onRetry={loadInventory}
                 searchPlaceholder="Search by SKU or product name..."
-                searchFields={["sku", "name"]}
+                searchFields={["sku", "name", "SKU", "Name"]}
                 emptyMessage="No inventory products recorded."
             />
 
@@ -367,13 +377,13 @@ function Inventory() {
                                 <div className="flex justify-between items-center">
                                     <span className="text-[color-mix(in_srgb,var(--ink)_60%,white)] uppercase text-[10px]">Product:</span>
                                     <span className="font-bold text-(--ink)">
-                                        {confirmAction?.item?.name ?? "—"}
+                                        {confirmAction?.item?.name ?? confirmAction?.item?.Name ?? "—"}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-[color-mix(in_srgb,var(--ink)_60%,white)] uppercase text-[10px]">SKU:</span>
                                     <span className="font-bold text-(--ink)">
-                                        {confirmAction?.item?.sku ?? "—"}
+                                        {confirmAction?.item?.sku ?? confirmAction?.item?.SKU ?? "—"}
                                     </span>
                                 </div>
                             </div>
@@ -390,19 +400,19 @@ function Inventory() {
                                 <div className="flex justify-between items-center">
                                     <span className="text-[color-mix(in_srgb,var(--ink)_60%,white)] uppercase text-[10px]">Product:</span>
                                     <span className="font-bold text-(--ink)">
-                                        {confirmAction?.item?.name ?? "—"}
+                                        {confirmAction?.item?.name ?? confirmAction?.item?.Name ?? "—"}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-[color-mix(in_srgb,var(--ink)_60%,white)] uppercase text-[10px]">SKU:</span>
                                     <span className="font-bold text-(--ink)">
-                                        {confirmAction?.item?.sku ?? "—"}
+                                        {confirmAction?.item?.sku ?? confirmAction?.item?.SKU ?? "—"}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-[color-mix(in_srgb,var(--ink)_60%,white)] uppercase text-[10px]">Stock Available:</span>
                                     <span className="font-bold text-(--ink) tabular-nums">
-                                        {Number(confirmAction?.item?.quantityAvailable ?? 0).toLocaleString()} units
+                                        {Number(confirmAction?.item?.quantityAvailable ?? confirmAction?.item?.QuantityAvailable ?? 0).toLocaleString()} units
                                     </span>
                                 </div>
                             </div>

@@ -20,9 +20,16 @@ function Users() {
 
         try {
             const result = await callMcpTool("get_users");
-            const userList = Array.isArray(result)
+            const rawUsers = Array.isArray(result)
                 ? result
                 : result.users ?? result.items ?? [];
+            const userList = rawUsers.map((u) => ({
+                id: u.id ?? u.Id,
+                username: u.username ?? u.Username ?? "—",
+                role: u.role ?? u.Role ?? "—",
+                isActive: Boolean(u.isActive ?? u.IsActive ?? true),
+                createdAtUtc: u.createdAtUtc ?? u.CreatedAtUtc,
+            }));
             setUsers(userList);
         } catch (err) {
             setError(err?.message || "Failed to load user accounts.");
@@ -54,7 +61,7 @@ function Users() {
             render: (val, row) => (
                 <div className="flex items-center gap-2">
                     <span className="font-semibold text-(--ink)">
-                        {val ?? row.username ?? "—"}
+                        {val || row.username || row.Username || "—"}
                     </span>
                 </div>
             ),
@@ -65,7 +72,7 @@ function Users() {
             sortable: true,
             width: "160px",
             render: (val, row) => {
-                const role = val ?? row.role ?? "—";
+                const role = val || row.role || row.Role || "—";
                 return (
                     <span className="font-mono text-xs text-(--ink)">
                         {role}
@@ -79,7 +86,7 @@ function Users() {
             align: "center",
             width: "120px",
             render: (val, row) => {
-                const active = val ?? row.isActive ?? true;
+                const active = val ?? row.isActive ?? row.IsActive ?? true;
                 return (
                     <StatusBadge tone={active ? "default" : "attention"}>
                         {active ? "Active" : "Disabled"}
@@ -94,7 +101,7 @@ function Users() {
             align: "right",
             width: "160px",
             render: (val, row) => {
-                const raw = val ?? row.createdAtUtc;
+                const raw = val ?? row.createdAtUtc ?? row.CreatedAtUtc;
                 if (!raw) return "—";
                 return (
                     <span className="font-mono tabular-nums text-[color-mix(in_srgb,var(--ink)_65%,white)]">

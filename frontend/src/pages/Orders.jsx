@@ -28,12 +28,36 @@ function Orders() {
                 callMcpTool("get_inventory"),
             ]);
 
-            const ordList = Array.isArray(ordersRes)
+            const ordList = (Array.isArray(ordersRes)
                 ? ordersRes
-                : ordersRes.orders ?? ordersRes.items ?? [];
-            const invList = Array.isArray(inventoryRes)
+                : ordersRes.orders ?? ordersRes.items ?? []
+            ).map((o) => ({
+                id: o.id ?? o.Id,
+                orderNumber: o.orderNumber ?? o.OrderNumber ?? "—",
+                username: o.username ?? o.Username ?? o.userId ?? o.UserId ?? "—",
+                totalAmount: Number(o.totalAmount ?? o.TotalAmount ?? 0),
+                createdAtUtc: o.createdAtUtc ?? o.CreatedAtUtc,
+                items: (o.items ?? o.Items ?? []).map((i) => ({
+                    inventoryId: i.inventoryId ?? i.InventoryId,
+                    productName: i.productName ?? i.ProductName ?? "—",
+                    quantity: Number(i.quantity ?? i.Quantity ?? 0),
+                    unitPrice: Number(i.unitPrice ?? i.UnitPrice ?? 0),
+                    totalPrice: Number(i.totalPrice ?? i.TotalPrice ?? 0),
+                })),
+            }));
+
+            const invList = (Array.isArray(inventoryRes)
                 ? inventoryRes
-                : inventoryRes.inventory ?? inventoryRes.items ?? [];
+                : inventoryRes.inventory ?? inventoryRes.items ?? []
+            ).map((i) => ({
+                id: i.id ?? i.Id,
+                sku: i.sku ?? i.SKU ?? "",
+                name: i.name ?? i.Name ?? "",
+                description: i.description ?? i.Description ?? "",
+                quantityAvailable: Number(i.quantityAvailable ?? i.QuantityAvailable ?? 0),
+                unitPrice: Number(i.unitPrice ?? i.UnitPrice ?? 0),
+                isActive: Boolean(i.isActive ?? i.IsActive ?? true),
+            }));
 
             setOrders(ordList);
             setInventory(invList);
@@ -69,7 +93,7 @@ function Orders() {
             sortable: true,
             render: (val, row) => (
                 <span className="font-mono font-medium text-(--ink)">
-                    {val ?? row.orderNumber ?? "—"}
+                    {val || row.orderNumber || row.OrderNumber || "—"}
                 </span>
             ),
         },
@@ -78,7 +102,7 @@ function Orders() {
             header: "Sales Representative",
             sortable: true,
             render: (val, row) =>
-                val ?? row.userId ?? "—",
+                val || row.username || row.Username || row.userId || row.UserId || "—",
         },
         {
             key: "orderItems",
@@ -86,7 +110,7 @@ function Orders() {
             align: "center",
             width: "100px",
             render: (val, row) => {
-                const count = (val ?? row.items ?? []).length;
+                const count = (val ?? row.items ?? row.Items ?? []).length;
                 return <span className="font-mono tabular-nums">{count}</span>;
             },
         },
@@ -97,7 +121,7 @@ function Orders() {
             align: "right",
             width: "140px",
             render: (val, row) => {
-                const total = Number(val ?? row.totalAmount ?? 0);
+                const total = Number(val ?? row.totalAmount ?? row.TotalAmount ?? 0);
                 return (
                     <span className="font-mono font-bold tabular-nums text-(--ink)">
                         ${total.toFixed(2)}
@@ -112,7 +136,7 @@ function Orders() {
             align: "right",
             width: "180px",
             render: (val, row) => {
-                const raw = val ?? row.createdAtUtc;
+                const raw = val ?? row.createdAtUtc ?? row.CreatedAtUtc;
                 if (!raw) return "—";
                 return (
                     <span className="font-mono tabular-nums text-[color-mix(in_srgb,var(--ink)_65%,white)]">

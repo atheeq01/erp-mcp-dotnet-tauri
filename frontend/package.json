@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:backend": "dotnet publish ../backend/SpilMcpServer/SpilMcpServer/SpilMcpServer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o src-tauri/bin",
+    "build:backend": "dotnet publish ../backend/SpilMcpServer/SpilMcpServer/SpilMcpServer.csproj -c Release -r win-x64 --self-contained false -o src-tauri/bin",
     "build:app": "npm run build:backend && npm run build && npm run tauri build",
     "preview": "vite preview",
     "tauri": "tauri"

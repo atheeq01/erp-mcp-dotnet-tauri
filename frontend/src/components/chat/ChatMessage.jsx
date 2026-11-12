@@ -59,7 +59,7 @@ function UserProfileCard({ user, expiresAtUtc, message }) {
                         Username
                     </span>
                     <span className="font-mono text-sm font-bold text-(--ink)">
-                        {user.username || "—"}
+                        {user.username || user.Username || "—"}
                     </span>
                 </div>
                 <div>
@@ -67,7 +67,7 @@ function UserProfileCard({ user, expiresAtUtc, message }) {
                         Security Role
                     </span>
                     <span className="inline-block mt-0.5 px-2 py-0.5 text-xs font-mono border border-(--ink) text-(--ink) rounded-xs">
-                        {user.role || "—"}
+                        {user.role || user.Role || "—"}
                     </span>
                 </div>
                 <div>
@@ -75,7 +75,7 @@ function UserProfileCard({ user, expiresAtUtc, message }) {
                         Account Status
                     </span>
                     <span className="inline-block mt-0.5 px-2 py-0.5 text-xs font-mono border border-(--line) text-(--ink) rounded-xs">
-                        {(user.isActive ?? true) ? "Active" : "Disabled"}
+                        {(user.isActive ?? user.IsActive ?? true) ? "Active" : "Disabled"}
                     </span>
                 </div>
             </div>
@@ -90,9 +90,9 @@ function UserProfileCard({ user, expiresAtUtc, message }) {
 }
 
 function OrderReceiptCard({ data }) {
-    const orderNumber = data.orderNumber || `ORD-${data.orderId || ""}`;
-    const amount = Number(data.totalAmount ?? 0);
-    const itemCount = data.items ?? data.itemCount ?? 0;
+    const orderNumber = data.orderNumber || data.OrderNumber || `ORD-${data.orderId || data.OrderId || ""}`;
+    const amount = Number(data.totalAmount ?? data.TotalAmount ?? 0);
+    const itemCount = data.items ?? data.Items ?? data.itemCount ?? data.ItemCount ?? 0;
 
     return (
         <div className="my-2 p-4 bg-white border border-(--line) rounded-xs space-y-3">
@@ -146,11 +146,11 @@ function OrderReceiptCard({ data }) {
 
 function ProductDetailCard({ item, message }) {
     if (!item) return null;
-    const sku = item.sku || "—";
+    const sku = item.sku || item.SKU || "—";
     const name = item.name || item.Name || "—";
-    const qty = Number(item.quantityAvailable ?? 0);
-    const price = Number(item.unitPrice ?? 0);
-    const active = item.isActive ?? true;
+    const qty = Number(item.quantityAvailable ?? item.QuantityAvailable ?? 0);
+    const price = Number(item.unitPrice ?? item.UnitPrice ?? 0);
+    const active = item.isActive ?? item.IsActive ?? true;
 
     return (
         <div className="my-2 p-4 bg-white border border-(--line) rounded-xs space-y-3">
@@ -241,12 +241,12 @@ function OrdersTable({ orders }) {
                     </thead>
                     <tbody className="divide-y divide-(--line) font-mono text-xs">
                         {orders.map((ord, idx) => {
-                            const orderId = ord.id ?? idx;
-                            const orderNumber = ord.orderNumber ?? "—";
-                            const username = ord.username ?? ord.userId ?? "—";
-                            const items = ord.items ?? ord.orderItems ?? [];
-                            const totalAmount = Number(ord.totalAmount ?? 0);
-                            const createdAt = ord.createdAtUtc ?? "";
+                            const orderId = ord.id ?? ord.Id ?? idx;
+                            const orderNumber = ord.orderNumber ?? ord.OrderNumber ?? "—";
+                            const username = ord.username ?? ord.Username ?? ord.userId ?? ord.UserId ?? "—";
+                            const items = ord.items ?? ord.Items ?? ord.orderItems ?? ord.OrderItems ?? [];
+                            const totalAmount = Number(ord.totalAmount ?? ord.TotalAmount ?? 0);
+                            const createdAt = ord.createdAtUtc ?? ord.CreatedAtUtc ?? "";
                             const isExpanded = expandedOrder === orderId;
 
                             return (
@@ -304,7 +304,7 @@ function OrdersTable({ orders }) {
                                                         {items.map((it, iIdx) => {
                                                             const pName = it.productName ?? it.ProductName ?? `Item #${it.inventoryId ?? it.InventoryId}`;
                                                             const itQty = Number(it.quantity ?? it.Quantity ?? 0);
-                                                            const itPrice = Number(it.unitPrice ?? 0);
+                                                            const itPrice = Number(it.unitPrice ?? it.UnitPrice ?? 0);
                                                             const itTotal = Number(it.totalPrice ?? it.TotalPrice ?? itQty * itPrice);
 
                                                             return (
@@ -358,11 +358,11 @@ function InventoryTable({ inventory }) {
                     <tbody className="divide-y divide-(--line) text-xs">
                         {inventory.map((inv, idx) => {
                             const id = inv.id ?? inv.Id ?? idx;
-                            const sku = inv.sku ?? "—";
+                            const sku = inv.sku ?? inv.SKU ?? "—";
                             const name = inv.name ?? inv.Name ?? "—";
                             const desc = inv.description ?? inv.Description ?? "";
-                            const qty = Number(inv.quantityAvailable ?? 0);
-                            const price = Number(inv.unitPrice ?? 0);
+                            const qty = Number(inv.quantityAvailable ?? inv.QuantityAvailable ?? 0);
+                            const price = Number(inv.unitPrice ?? inv.UnitPrice ?? 0);
                             const isLow = qty <= 20;
 
                             return (
@@ -429,11 +429,11 @@ function UsersTable({ users }) {
                     </thead>
                     <tbody className="divide-y divide-(--line) font-mono text-xs">
                         {users.map((u, idx) => {
-                            const id = u.id ?? idx;
-                            const uname = u.username ?? "—";
-                            const role = u.role ?? "—";
-                            const active = u.isActive ?? true;
-                            const created = u.createdAtUtc ?? "";
+                            const id = u.id ?? u.Id ?? idx;
+                            const uname = u.username ?? u.Username ?? "—";
+                            const role = u.role ?? u.Role ?? "—";
+                            const active = u.isActive ?? u.IsActive ?? true;
+                            const created = u.createdAtUtc ?? u.CreatedAtUtc ?? "";
 
                             return (
                                 <tr
@@ -484,7 +484,7 @@ function KeyValueGrid({ data }) {
                     {entries.map(([k, v]) => (
                         <tr key={k}>
                             <td className="py-1.5 pr-4 uppercase text-[color-mix(in_srgb,var(--ink)_60%,white)] font-semibold w-1/3">
-                                {k}
+                                {fieldLabel(k)}
                             </td>
                             <td className="py-1.5 font-bold text-(--ink)">
                                 {v === null ? "—" : typeof v === "boolean" ? (v ? "Yes" : "No") : String(v)}
@@ -552,10 +552,19 @@ function OrderItemsBuilder({ onSubmit }) {
                     if (!cancelled) setLoadError(result.message || "Could not load inventory.");
                     return;
                 }
-                const items = result?.inventory || (Array.isArray(result) ? result : []);
+                const rawItems = result?.inventory || (Array.isArray(result) ? result : []);
+                const items = rawItems.map((p) => ({
+                    id: p.id ?? p.Id,
+                    sku: p.sku ?? p.SKU ?? "",
+                    name: p.name ?? p.Name ?? "—",
+                    description: p.description ?? p.Description ?? "",
+                    quantityAvailable: Number(p.quantityAvailable ?? p.QuantityAvailable ?? 0),
+                    unitPrice: Number(p.unitPrice ?? p.UnitPrice ?? 0),
+                    isActive: Boolean(p.isActive ?? p.IsActive ?? true),
+                }));
                 // Only show active items with stock
                 const active = items.filter(
-                    (p) => (p.isActive ?? true)
+                    (p) => p.isActive
                 );
                 setProducts(active);
             } catch (err) {
@@ -579,7 +588,7 @@ function OrderItemsBuilder({ onSubmit }) {
 
     function getProduct(id) {
         const numId = parseInt(id, 10);
-        return products.find((p) => p.id === numId);
+        return products.find((p) => (p.id ?? p.Id) === numId);
     }
 
     // IDs already used in other lines
@@ -659,14 +668,14 @@ function OrderItemsBuilder({ onSubmit }) {
                                     >
                                         <option value="">— Select a product —</option>
                                         {products.map((p) => {
-                                            const pid = Stringp.id;
-                                            const pName = p.name ?? "—";
-                                            const pSku = p.sku ?? "";
-                                            const pQty = Number(p.quantityAvailable ?? 0);
+                                            const pid = String(p.id ?? p.Id);
+                                            const pName = p.name ?? p.Name ?? "—";
+                                            const pSku = p.sku ?? p.SKU ?? "";
+                                            const pQty = Number(p.quantityAvailable ?? p.QuantityAvailable ?? 0);
                                             const disabled = taken.has(pid);
                                             return (
                                                 <option key={pid} value={pid} disabled={disabled}>
-                                                    {pSku} — {pName}  ({pQty} in stock)
+                                                    {pSku ? `${pSku} — ` : ""}{pName}  ({pQty} in stock)
                                                 </option>
                                             );
                                         })}
@@ -759,7 +768,16 @@ function InventoryPickerForm({ tool, onSubmit }) {
                     if (!cancelled) setLoadError(result.message || "Could not load inventory.");
                     return;
                 }
-                const items = result?.inventory || (Array.isArray(result) ? result : []);
+                const rawItems = result?.inventory || (Array.isArray(result) ? result : []);
+                const items = rawItems.map((p) => ({
+                    id: p.id ?? p.Id,
+                    sku: p.sku ?? p.SKU ?? "",
+                    name: p.name ?? p.Name ?? "—",
+                    description: p.description ?? p.Description ?? "",
+                    quantityAvailable: Number(p.quantityAvailable ?? p.QuantityAvailable ?? 0),
+                    unitPrice: Number(p.unitPrice ?? p.UnitPrice ?? 0),
+                    isActive: Boolean(p.isActive ?? p.IsActive ?? true),
+                }));
                 setProducts(items);
             } catch (err) {
                 if (!cancelled) setLoadError(err?.message || "Could not load inventory.");
@@ -775,14 +793,14 @@ function InventoryPickerForm({ tool, onSubmit }) {
         setSelectedId(idStr);
         if (!idStr) return;
         const numId = parseInt(idStr, 10);
-        const product = products.find((p) => p.id === numId);
+        const product = products.find((p) => (p.id ?? p.Id) === numId);
         if (product) {
             setFormData({
-                sku: product.sku ?? "",
+                sku: product.sku ?? product.SKU ?? "",
                 name: product.name ?? product.Name ?? "",
                 description: product.description ?? product.Description ?? "",
-                quantityAvailable: String(product.quantityAvailable ?? 0),
-                unitPrice: String(product.unitPrice ?? 0),
+                quantityAvailable: String(product.quantityAvailable ?? product.QuantityAvailable ?? 0),
+                unitPrice: String(product.unitPrice ?? product.UnitPrice ?? 0),
                 isActive: product.isActive ?? product.IsActive ?? true,
             });
         }
@@ -813,7 +831,7 @@ function InventoryPickerForm({ tool, onSubmit }) {
     }
 
     const selected = selectedId
-        ? products.find((p) => p.id === parseInt(selectedId, 10))
+        ? products.find((p) => (p.id ?? p.Id) === parseInt(selectedId, 10))
         : null;
 
     return (
@@ -856,14 +874,14 @@ function InventoryPickerForm({ tool, onSubmit }) {
                         >
                             <option value="">— Choose a product —</option>
                             {products.map((p) => {
-                                const pid = Stringp.id;
-                                const pName = p.name ?? "—";
-                                const pSku = p.sku ?? "";
-                                const pQty = Number(p.quantityAvailable ?? 0);
-                                const pActive = p.isActive ?? true;
+                                const pid = String(p.id ?? p.Id);
+                                const pName = p.name ?? p.Name ?? "—";
+                                const pSku = p.sku ?? p.SKU ?? "";
+                                const pQty = Number(p.quantityAvailable ?? p.QuantityAvailable ?? 0);
+                                const pActive = p.isActive ?? p.IsActive ?? true;
                                 return (
                                     <option key={pid} value={pid}>
-                                        {pSku} — {pName}  ({pQty} in stock{!pActive ? ", Inactive" : ""})
+                                        {pSku ? `${pSku} — ` : ""}{pName}  ({pQty} in stock{!pActive ? ", Inactive" : ""})
                                     </option>
                                 );
                             })}
@@ -875,17 +893,17 @@ function InventoryPickerForm({ tool, onSubmit }) {
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2.5 bg-white border border-(--line) rounded-xs text-[10px] font-mono">
                             <div>
                                 <span className="uppercase text-[color-mix(in_srgb,var(--ink)_50%,white)] block">Current SKU</span>
-                                <span className="font-bold text-(--ink)">{selected.sku ?? "—"}</span>
+                                <span className="font-bold text-(--ink)">{selected.sku ?? selected.SKU ?? "—"}</span>
                             </div>
                             <div>
                                 <span className="uppercase text-[color-mix(in_srgb,var(--ink)_50%,white)] block">Stock</span>
-                                <span className={`font-bold ${Number(selected.quantityAvailable ?? 0) <= 20 ? "text-(--accent)" : "text-(--ink)"}`}>
-                                    {Number(selected.quantityAvailable ?? 0).toLocaleString()} units
+                                <span className={`font-bold ${Number(selected.quantityAvailable ?? selected.QuantityAvailable ?? 0) <= 20 ? "text-(--accent)" : "text-(--ink)"}`}>
+                                    {Number(selected.quantityAvailable ?? selected.QuantityAvailable ?? 0).toLocaleString()} units
                                 </span>
                             </div>
                             <div>
                                 <span className="uppercase text-[color-mix(in_srgb,var(--ink)_50%,white)] block">Price</span>
-                                <span className="font-bold text-(--ink)">${Number(selected.unitPrice ?? 0).toFixed(2)}</span>
+                                <span className="font-bold text-(--ink)">${Number(selected.unitPrice ?? selected.UnitPrice ?? 0).toFixed(2)}</span>
                             </div>
                             <div>
                                 <span className="uppercase text-[color-mix(in_srgb,var(--ink)_50%,white)] block">Status</span>
@@ -1240,13 +1258,13 @@ function DataResultView({ tool, data, rawQuery }) {
             );
         }
 
-        if (data[0].orderNumber) {
+        if (data[0].orderNumber || data[0].OrderNumber) {
             return <OrdersTable orders={data} />;
         }
-        if (data[0].sku) {
+        if (data[0].sku || data[0].SKU) {
             return <InventoryTable inventory={data} />;
         }
-        if (data[0].username) {
+        if (data[0].username || data[0].Username) {
             return <UsersTable users={data} />;
         }
     }
