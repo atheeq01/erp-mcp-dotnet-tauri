@@ -84,11 +84,11 @@ public static class UserManagementTools
             message = "User created successfully.",
             user = new
             {
-                newUser.Id,
-                newUser.Username,
-                newUser.Role,
-                newUser.IsActive,
-                newUser.CreatedAtUtc
+                id = newUser.Id,
+                username = newUser.Username,
+                role = newUser.Role,
+                isActive = newUser.IsActive,
+                createdAtUtc = newUser.CreatedAtUtc
             }
         });
     }
@@ -115,11 +115,11 @@ public static class UserManagementTools
             .OrderBy(u => u.Username)
             .Select(u => new
             {
-                u.Id,
-                u.Username,
-                u.Role,
-                u.IsActive,
-                u.CreatedAtUtc
+                id = u.Id,
+                username = u.Username,
+                role = u.Role,
+                isActive = u.IsActive,
+                createdAtUtc = u.CreatedAtUtc
             })
             .ToListAsync();
 

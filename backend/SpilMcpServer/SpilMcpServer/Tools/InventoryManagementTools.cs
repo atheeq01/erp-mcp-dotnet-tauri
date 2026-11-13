@@ -86,12 +86,13 @@ public static class InventoryManagementTools
             message = "Inventory item created successfully.",
             inventory = new
             {
-                item.Id,
-                item.SKU,
-                item.Name,
-                item.QuantityAvailable,
-                item.UnitPrice,
-                item.IsActive
+                id = item.Id,
+                sku = item.SKU,
+                name = item.Name,
+                description = item.Description,
+                quantityAvailable = item.QuantityAvailable,
+                unitPrice = item.UnitPrice,
+                isActive = item.IsActive
             }
         });
     }
@@ -187,12 +188,13 @@ public static class InventoryManagementTools
             message = "Inventory item updated successfully.",
             inventory = new
             {
-                item.Id,
-                item.SKU,
-                item.Name,
-                item.QuantityAvailable,
-                item.UnitPrice,
-                item.IsActive
+                id = item.Id,
+                sku = item.SKU,
+                name = item.Name,
+                description = item.Description,
+                quantityAvailable = item.QuantityAvailable,
+                unitPrice = item.UnitPrice,
+                isActive = item.IsActive
             }
         });
     }

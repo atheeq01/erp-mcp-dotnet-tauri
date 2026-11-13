@@ -50,13 +50,13 @@ public static class InventoryTools
             .OrderBy(i => i.Name)
             .Select(i => new
             {
-                i.Id,
-                i.SKU,
-                i.Name,
-                i.Description,
-                i.QuantityAvailable,
-                i.UnitPrice,
-                i.IsActive
+                id = i.Id,
+                sku = i.SKU,
+                name = i.Name,
+                description = i.Description,
+                quantityAvailable = i.QuantityAvailable,
+                unitPrice = i.UnitPrice,
+                isActive = i.IsActive
             })
             .ToListAsync();
 

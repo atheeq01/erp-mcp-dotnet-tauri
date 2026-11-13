@@ -55,18 +55,18 @@ public static class OrderTools
             .OrderByDescending(o => o.CreatedAtUtc)
             .Select(o => new
             {
-                o.Id,
-                o.OrderNumber,
-                o.TotalAmount,
-                o.CreatedAtUtc,
-                Username = o.User!.Username,
-                Items = o.OrderItems.Select(item => new
+                id = o.Id,
+                orderNumber = o.OrderNumber,
+                totalAmount = o.TotalAmount,
+                createdAtUtc = o.CreatedAtUtc,
+                username = o.User!.Username,
+                items = o.OrderItems.Select(item => new
                 {
-                    item.InventoryId,
-                    ProductName = item.Inventory!.Name,
-                    item.Quantity,
-                    item.UnitPrice,
-                    item.TotalPrice
+                    inventoryId = item.InventoryId,
+                    productName = item.Inventory!.Name,
+                    quantity = item.Quantity,
+                    unitPrice = item.UnitPrice,
+                    totalPrice = item.TotalPrice
                 })
             })
             .ToListAsync();
