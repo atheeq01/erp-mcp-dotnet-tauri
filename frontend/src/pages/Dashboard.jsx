@@ -221,7 +221,7 @@ function Dashboard() {
                             {loading ? "-" : lowStockItems.length}
                         </span>
                         <p className="text-xs text-[color-mix(in_srgb,var(--ink)_55%,white)] mt-1 font-mono">
-                            SKUs with <= 20 units remaining
+                            {"SKUs with <= 20 units remaining"}
                         </p>
                     </div>
                 </div>
