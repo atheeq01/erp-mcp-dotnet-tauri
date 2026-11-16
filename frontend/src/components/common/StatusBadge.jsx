@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 
 const TONE_CLASSES = {
     attention: "border-(--accent) text-(--accent) bg-transparent",

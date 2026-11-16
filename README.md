@@ -1,7 +1,7 @@
 # SPIL Mini ERP
 
 > **Modern, Local-First Desktop Enterprise Resource Planning (ERP) System**  
-> Powered by **React 19**, **Tauri 2 (Rust)**, **.NET 10 (C#) Model Context Protocol (MCP) Server**, and **Local ONNX Semantic AI**.
+> Powered by **React 19**, **Tauri 2 (Rust)**, **.NET 10 (C#) Model Context Protocol (MCP) Server**, and **Local Regex Intent Engine**.
 
 ---
 
@@ -11,7 +11,7 @@
 2. [High-Level Architecture](#-high-level-architecture)
 3. [Low-Level Architecture & Process Lifecycle](#-low-level-architecture--process-lifecycle)
 4. [First-Run Setup & SQL Server Auto-Migration](#-first-run-setup--sql-server-auto-migration)
-5. [Local ONNX Semantic Intent Engine](#-local-onnx-semantic-intent-engine)
+5. [Local Regex Intent Engine](#-local-regex-intent-engine)
 6. [Complete MCP Tools Reference](#-complete-mcp-tools-reference)
    - [RBAC Authorization Matrix](#rbac-authorization-matrix)
    - [Authentication & Setup Tools](#1-authentication--setup-tools)
@@ -32,7 +32,7 @@
 - **Zero-Flicker Desktop Shell:** Built on Tauri 2.0 with a React 19 UI, consuming ~40MB RAM.
 - **Headless .NET MCP Micro-Daemon:** High-throughput business logic running in the background with hidden console flags (`CREATE_NO_WINDOW`).
 - **Standardized AI Integration:** All ERP capabilities are exposed through the open **Model Context Protocol (MCP)** over JSON-RPC stdio pipes.
-- **Built-in Local Semantic Engine:** Processes natural-language operational prompts locally using an ONNX runtime embedding model (`all-MiniLM-L6-v2`) with zero external cloud dependencies.
+- **Built-in Local Intent Engine:** Processes natural-language operational prompts locally using a deterministic, fast Regex pattern matching and parameter extraction engine with zero external cloud dependencies or heavy model files.
 - **Enterprise Database Backend:** Managed via Entity Framework Core with automatic SQL Server / SSMS migrations.
 
 ---
@@ -46,8 +46,8 @@ flowchart TD
     subgraph ClientPC ["Client Workstation (Windows 10 / 11)"]
         subgraph TauriApp ["SPIL Mini ERP Desktop App (Tauri v2 + WebView2)"]
             UI["React 19 Frontend<br/>(Tailwind CSS, Lucide, React Router)"]
-            IPC["Tauri Rust IPC Core<br/>(Commands, State, Tokenizer)"]
-            ONNX["Local ONNX Runtime<br/>(all-MiniLM-L6-v2)"]
+            IPC["Tauri Rust IPC Core<br/>(Commands, State, Resolver)"]
+            RegexEngine["Local Regex Engine<br/>(Action & Entity Matcher)"]
         end
 
         subgraph BackgroundDaemon ["Headless Background Process (Hidden)"]
@@ -62,7 +62,7 @@ flowchart TD
     end
 
     UI <--> |"tauri.invoke() / JSON Events"| IPC
-    IPC <--> |"Local Cosine Intent Matching"| ONNX
+    IPC <--> |"Regex Pattern Matching"| RegexEngine
     IPC <--> |"JSON-RPC 2.0 over Stdio (Piped stdin/stdout)"| MCP
     MCP --> AuthMod
     MCP --> EFCore
@@ -144,19 +144,18 @@ sequenceDiagram
 
 ---
 
-## 🧠 Local ONNX Semantic Intent Engine
+## ⚡ Local Regex Intent Engine
 
 The desktop app features an AI command interface allowing operators to manage inventory and orders using plain conversational English.
 
 ```mermaid
 flowchart LR
-    UserInput["Operator Input:<br/>'Add 50 boxes of 10mm bolts'"] --> Tokenizer["HuggingFace Tokenizer<br/>(tokenizer.json)"]
-    Tokenizer --> ONNX["ONNX Runtime Engine<br/>(all-MiniLM-L6-v2.onnx)"]
-    ONNX --> Vector["384-dimensional<br/>L2 Normalized Embedding"]
-    Vector --> Matcher["Cosine Similarity Engine<br/>vs Registered Tool Centroids"]
-    Matcher --> Decision{"Similarity >= Threshold?"}
+    UserInput["Operator Input:<br/>'Add 50 boxes of 10mm bolts'"] --> Preprocessor["Query Preprocessor &<br/>Noise / Negation Filter"]
+    Preprocessor --> RegexMatcher["Regex Pattern Matcher<br/>(Action & Entity Classifier)"]
+    RegexMatcher --> Scoring["Intent Scorer &<br/>Ambiguity Resolver"]
+    Scoring --> Decision{"Score >= Threshold?"}
     Decision -- Yes --> Formulate["Extract Parameters &<br/>Present Confirmation Dialog"]
-    Decision -- No --> RegexFallback["Regex Pattern Fallback Engine"]
+    Decision -- No --> Ambiguous["Request Clarification / Suggestions"]
     Formulate --> Execution["Invoke Authenticated MCP Tool"]
 ```
 

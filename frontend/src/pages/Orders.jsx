@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { callMcpTool } from "../services/mcpService";
 import { useAuth } from "../hooks/useAuth";
@@ -33,13 +33,13 @@ function Orders() {
                 : ordersRes.orders ?? ordersRes.items ?? []
             ).map((o) => ({
                 id: o.id ?? o.Id,
-                orderNumber: o.orderNumber ?? o.OrderNumber ?? "—",
-                username: o.username ?? o.Username ?? o.userId ?? o.UserId ?? "—",
+                orderNumber: o.orderNumber ?? o.OrderNumber ?? "-",
+                username: o.username ?? o.Username ?? o.userId ?? o.UserId ?? "-",
                 totalAmount: Number(o.totalAmount ?? o.TotalAmount ?? 0),
                 createdAtUtc: o.createdAtUtc ?? o.CreatedAtUtc,
                 items: (o.items ?? o.Items ?? []).map((i) => ({
                     inventoryId: i.inventoryId ?? i.InventoryId,
-                    productName: i.productName ?? i.ProductName ?? "—",
+                    productName: i.productName ?? i.ProductName ?? "-",
                     quantity: Number(i.quantity ?? i.Quantity ?? 0),
                     unitPrice: Number(i.unitPrice ?? i.UnitPrice ?? 0),
                     totalPrice: Number(i.totalPrice ?? i.TotalPrice ?? 0),
@@ -93,7 +93,7 @@ function Orders() {
             sortable: true,
             render: (val, row) => (
                 <span className="font-mono font-medium text-(--ink)">
-                    {val || row.orderNumber || row.OrderNumber || "—"}
+                    {val || row.orderNumber || row.OrderNumber || "-"}
                 </span>
             ),
         },
@@ -102,7 +102,7 @@ function Orders() {
             header: "Sales Representative",
             sortable: true,
             render: (val, row) =>
-                val || row.username || row.Username || row.userId || row.UserId || "—",
+                val || row.username || row.Username || row.userId || row.UserId || "-",
         },
         {
             key: "orderItems",
@@ -137,7 +137,7 @@ function Orders() {
             width: "180px",
             render: (val, row) => {
                 const raw = val ?? row.createdAtUtc ?? row.CreatedAtUtc;
-                if (!raw) return "—";
+                if (!raw) return "-";
                 return (
                     <span className="font-mono tabular-nums text-[color-mix(in_srgb,var(--ink)_65%,white)]">
                         {new Date(raw).toLocaleString()}

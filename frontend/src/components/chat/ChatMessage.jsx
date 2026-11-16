@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     RotateCcw,
     AlertCircle,
@@ -9,6 +9,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 import Button from "../common/Button";
+import { callMcpTool } from "../../services/mcpService";
 
 function ScoreChip({ label, value, isPercent }) {
     if (value === undefined || value === null) return null;
@@ -59,7 +60,7 @@ function UserProfileCard({ user, expiresAtUtc, message }) {
                         Username
                     </span>
                     <span className="font-mono text-sm font-bold text-(--ink)">
-                        {user.username || user.Username || "—"}
+                        {user.username || user.Username || "-"}
                     </span>
                 </div>
                 <div>
@@ -67,7 +68,7 @@ function UserProfileCard({ user, expiresAtUtc, message }) {
                         Security Role
                     </span>
                     <span className="inline-block mt-0.5 px-2 py-0.5 text-xs font-mono border border-(--ink) text-(--ink) rounded-xs">
-                        {user.role || user.Role || "—"}
+                        {user.role || user.Role || "-"}
                     </span>
                 </div>
                 <div>
@@ -93,6 +94,8 @@ function OrderReceiptCard({ data }) {
     const orderNumber = data.orderNumber || data.OrderNumber || `ORD-${data.orderId || data.OrderId || ""}`;
     const amount = Number(data.totalAmount ?? data.TotalAmount ?? 0);
     const itemCount = data.items ?? data.Items ?? data.itemCount ?? data.ItemCount ?? 0;
+    const customer = data.customerName ?? data.CustomerName;
+    const phone = data.customerPhone ?? data.CustomerPhone;
 
     return (
         <div className="my-2 p-4 bg-white border border-(--line) rounded-xs space-y-3">
@@ -108,7 +111,7 @@ function OrderReceiptCard({ data }) {
                 </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
                     <span className="text-xs font-mono uppercase text-[color-mix(in_srgb,var(--ink)_60%,white)] block">
                         Order Identifier
@@ -117,6 +120,21 @@ function OrderReceiptCard({ data }) {
                         {orderNumber}
                     </span>
                 </div>
+                {customer && (
+                    <div>
+                        <span className="text-xs font-mono uppercase text-[color-mix(in_srgb,var(--ink)_60%,white)] block">
+                            Customer
+                        </span>
+                        <span className="font-mono text-sm font-bold text-(--ink) block">
+                            {customer}
+                        </span>
+                        {phone && (
+                            <span className="text-xs font-mono text-[color-mix(in_srgb,var(--ink)_60%,white)] block">
+                                {phone}
+                            </span>
+                        )}
+                    </div>
+                )}
                 <div>
                     <span className="text-xs font-mono uppercase text-[color-mix(in_srgb,var(--ink)_60%,white)] block">
                         Total Amount
@@ -146,8 +164,8 @@ function OrderReceiptCard({ data }) {
 
 function ProductDetailCard({ item, message }) {
     if (!item) return null;
-    const sku = item.sku || item.SKU || "—";
-    const name = item.name || item.Name || "—";
+    const sku = item.sku || item.SKU || "-";
+    const name = item.name || item.Name || "-";
     const qty = Number(item.quantityAvailable ?? item.QuantityAvailable ?? 0);
     const price = Number(item.unitPrice ?? item.UnitPrice ?? 0);
     const active = item.isActive ?? item.IsActive ?? true;
@@ -242,8 +260,9 @@ function OrdersTable({ orders }) {
                     <tbody className="divide-y divide-(--line) font-mono text-xs">
                         {orders.map((ord, idx) => {
                             const orderId = ord.id ?? ord.Id ?? idx;
-                            const orderNumber = ord.orderNumber ?? ord.OrderNumber ?? "—";
-                            const username = ord.username ?? ord.Username ?? ord.userId ?? ord.UserId ?? "—";
+                            const orderNumber = ord.orderNumber ?? ord.OrderNumber ?? "-";
+                            const username = ord.username ?? ord.Username ?? ord.userId ?? ord.UserId ?? "-";
+                            const customerName = ord.customerName ?? ord.CustomerName;
                             const items = ord.items ?? ord.Items ?? ord.orderItems ?? ord.OrderItems ?? [];
                             const totalAmount = Number(ord.totalAmount ?? ord.TotalAmount ?? 0);
                             const createdAt = ord.createdAtUtc ?? ord.CreatedAtUtc ?? "";
@@ -270,7 +289,12 @@ function OrdersTable({ orders }) {
                                             {orderNumber}
                                         </td>
                                         <td className="px-3 py-2.5 text-(--ink) whitespace-nowrap">
-                                            {username}
+                                            <div>{username}</div>
+                                            {customerName && (
+                                                <div className="text-[10px] text-[color-mix(in_srgb,var(--ink)_50%,white)] font-sans">
+                                                    Cust: {customerName}
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-3 py-2.5 text-center whitespace-nowrap">
                                             <span className="px-1.5 py-0.5 bg-(--paper) border border-(--line) rounded-xs">
@@ -281,7 +305,7 @@ function OrdersTable({ orders }) {
                                             ${totalAmount.toFixed(2)}
                                         </td>
                                         <td className="px-3 py-2.5 text-right text-[color-mix(in_srgb,var(--ink)_60%,white)] whitespace-nowrap">
-                                            {createdAt ? new Date(createdAt).toLocaleDateString() : "—"}
+                                            {createdAt ? new Date(createdAt).toLocaleDateString() : "-"}
                                         </td>
                                     </tr>
 
@@ -334,7 +358,7 @@ function OrdersTable({ orders }) {
     );
 }
 
-function InventoryTable({ inventory }) {
+function InventoryTable({ inventory, onStartOrderWithItem }) {
     return (
         <div className="my-2 border border-(--line) bg-white rounded-xs overflow-hidden">
             <div className="overflow-x-auto">
@@ -353,13 +377,18 @@ function InventoryTable({ inventory }) {
                             <th className="px-3 py-2.5 text-xs uppercase tracking-wider font-semibold text-[color-mix(in_srgb,var(--ink)_75%,white)] font-mono whitespace-nowrap text-right">
                                 Unit Price
                             </th>
+                            {onStartOrderWithItem && (
+                                <th className="px-3 py-2.5 text-xs uppercase tracking-wider font-semibold text-[color-mix(in_srgb,var(--ink)_75%,white)] font-mono whitespace-nowrap text-right">
+                                    Action
+                                </th>
+                            )}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-(--line) text-xs">
                         {inventory.map((inv, idx) => {
                             const id = inv.id ?? inv.Id ?? idx;
-                            const sku = inv.sku ?? inv.SKU ?? "—";
-                            const name = inv.name ?? inv.Name ?? "—";
+                            const sku = inv.sku ?? inv.SKU ?? "-";
+                            const name = inv.name ?? inv.Name ?? "-";
                             const desc = inv.description ?? inv.Description ?? "";
                             const qty = Number(inv.quantityAvailable ?? inv.QuantityAvailable ?? 0);
                             const price = Number(inv.unitPrice ?? inv.UnitPrice ?? 0);
@@ -393,6 +422,19 @@ function InventoryTable({ inventory }) {
                                     <td className="px-3 py-2.5 text-right font-mono text-(--ink) tabular-nums whitespace-nowrap">
                                         ${price.toFixed(2)}
                                     </td>
+                                    {onStartOrderWithItem && (
+                                        <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="sm"
+                                                disabled={qty <= 0}
+                                                onClick={() => onStartOrderWithItem(id)}
+                                            >
+                                                + Order
+                                            </Button>
+                                        </td>
+                                    )}
                                 </tr>
                             );
                         })}
@@ -402,6 +444,160 @@ function InventoryTable({ inventory }) {
             <div className="px-3 py-1.5 bg-(--paper) border-t border-(--line) text-xs font-mono text-[color-mix(in_srgb,var(--ink)_60%,white)]">
                 Showing {inventory.length} inventory {inventory.length === 1 ? "product" : "products"}.
             </div>
+        </div>
+    );
+}
+
+function extractSearchTermFromQuery(text) {
+    if (!text) return "";
+    const quoteMatch = text.match(/["']([^"']+)["']/);
+    if (quoteMatch) return quoteMatch[1].trim();
+    const triggerMatch = text.match(/(?:is\s+this\s+have|do\s+we\s+have|have\s+we\s+got|have|has|got|search(?:\s+for)?|check(?:\s+for)?|find|is\s+there|is)\s+([A-Za-z0-9\s_-]{3,40})/i);
+    if (triggerMatch) {
+        const cleaned = triggerMatch[1].replace(/(?:available|in\s+stock|in\s+inventory|in\s+the\s+inventory).*$/i, "").trim();
+        const lower = cleaned.toLowerCase();
+        if (lower && !["inventory", "product", "products", "stock", "item", "items"].includes(lower)) {
+            return cleaned;
+        }
+    }
+    return "";
+}
+
+function InventoryResultView({ inventory, searchQuery, onStartOrderWithItem }) {
+    if (!inventory || inventory.length === 0) {
+        return (
+            <div className="my-2 p-4 border border-(--line) bg-(--paper) rounded-xs text-center font-mono text-xs">
+                Zero inventory items recorded in database.
+            </div>
+        );
+    }
+
+    const q = (searchQuery || "").trim().toLowerCase();
+
+    // If no search query was requested, show the standard inventory table
+    if (!q) {
+        return <InventoryTable inventory={inventory} onStartOrderWithItem={onStartOrderWithItem} />;
+    }
+
+    // 1. Check for Exact Match (by Name or SKU)
+    const exactMatch = inventory.find((item) => {
+        const name = (item.name ?? item.Name ?? "").trim().toLowerCase();
+        const sku = (item.sku ?? item.SKU ?? "").trim().toLowerCase();
+        return name === q || sku === q;
+    });
+
+    if (exactMatch) {
+        const id = exactMatch.id ?? exactMatch.Id;
+        const sku = exactMatch.sku ?? exactMatch.SKU ?? "-";
+        const name = exactMatch.name ?? exactMatch.Name ?? "-";
+        const desc = exactMatch.description ?? exactMatch.Description ?? "";
+        const qty = Number(exactMatch.quantityAvailable ?? exactMatch.QuantityAvailable ?? 0);
+        const price = Number(exactMatch.unitPrice ?? exactMatch.UnitPrice ?? 0);
+        const isLow = qty <= 20;
+
+        return (
+            <div className="my-2 p-4 bg-white border-2 border-(--ink) rounded-xs space-y-3">
+                <div className="flex items-center justify-between border-b border-(--line) pb-2.5">
+                    <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-emerald-600" strokeWidth={2} />
+                        <span className="font-display text-sm font-bold text-(--ink)">
+                            Exact Product Found in Inventory
+                        </span>
+                    </div>
+                    <span
+                        className={`px-2 py-0.5 text-xs font-mono border rounded-xs font-bold ${
+                            qty > 0
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                                : "bg-red-50 text-(--accent) border-(--accent)"
+                        }`}
+                    >
+                        {qty > 0 ? `${qty.toLocaleString()} in stock` : "Out of stock"}
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div>
+                        <span className="text-[10px] font-mono uppercase text-[color-mix(in_srgb,var(--ink)_60%,white)] block">
+                            SKU / Code
+                        </span>
+                        <span className="font-mono font-bold text-(--ink)">{sku}</span>
+                    </div>
+                    <div className="sm:col-span-2">
+                        <span className="text-[10px] font-mono uppercase text-[color-mix(in_srgb,var(--ink)_60%,white)] block">
+                            Product Specification
+                        </span>
+                        <span className="font-bold text-(--ink) text-sm block">{name}</span>
+                        {desc && (
+                            <p className="text-xs text-[color-mix(in_srgb,var(--ink)_50%,white)] mt-0.5">
+                                {desc}
+                            </p>
+                        )}
+                    </div>
+                    <div>
+                        <span className="text-[10px] font-mono uppercase text-[color-mix(in_srgb,var(--ink)_60%,white)] block">
+                            Unit Price
+                        </span>
+                        <span className="font-mono font-bold text-base text-(--accent) tabular-nums">
+                            ${price.toFixed(2)}
+                        </span>
+                    </div>
+                </div>
+
+                {onStartOrderWithItem && (
+                    <div className="pt-2 border-t border-(--line) flex items-center justify-between">
+                        <span className="text-xs font-mono text-[color-mix(in_srgb,var(--ink)_50%,white)]">
+                            {isLow && qty > 0 ? "! Low stock alert (under 20 units available)" : "Ready to fulfill orders."}
+                        </span>
+                        <Button
+                            type="button"
+                            variant="primary"
+                            size="md"
+                            disabled={qty <= 0}
+                            onClick={() => onStartOrderWithItem(id)}
+                        >
+                            + Order This Product
+                        </Button>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // 2. Check for Similar / Best Matches (Tokens or Substring)
+    const tokens = q.split(/[\s-_]+/).filter((t) => t.length >= 2);
+    const similarItems = inventory.filter((item) => {
+        const name = (item.name ?? item.Name ?? "").toLowerCase();
+        const sku = (item.sku ?? item.SKU ?? "").toLowerCase();
+        return (
+            name.includes(q) ||
+            sku.includes(q) ||
+            q.includes(name) ||
+            tokens.some((t) => name.includes(t) || sku.includes(t))
+        );
+    });
+
+    if (similarItems.length > 0) {
+        return (
+            <div className="space-y-2 my-2">
+                <div className="p-2.5 bg-amber-50/60 border border-amber-200 rounded-xs flex items-center justify-between text-xs font-mono text-(--ink)">
+                    <span>
+                        No exact match for <strong>"{searchQuery}"</strong>. Showing <strong>{similarItems.length} similar item(s)</strong>:
+                    </span>
+                </div>
+                <InventoryTable inventory={similarItems} onStartOrderWithItem={onStartOrderWithItem} />
+            </div>
+        );
+    }
+
+    // 3. No match found
+    return (
+        <div className="my-2 p-4 border border-(--line) bg-(--paper) rounded-xs text-center font-mono text-xs">
+            <p className="font-bold text-(--ink) text-sm">
+                No inventory product found matching "{searchQuery}".
+            </p>
+            <p className="text-[color-mix(in_srgb,var(--ink)_60%,white)] mt-1.5">
+                Total items in catalog: {inventory.length}. Check your spelling or try another SKU / keyword.
+            </p>
         </div>
     );
 }
@@ -430,8 +626,8 @@ function UsersTable({ users }) {
                     <tbody className="divide-y divide-(--line) font-mono text-xs">
                         {users.map((u, idx) => {
                             const id = u.id ?? u.Id ?? idx;
-                            const uname = u.username ?? u.Username ?? "—";
-                            const role = u.role ?? u.Role ?? "—";
+                            const uname = u.username ?? u.Username ?? "-";
+                            const role = u.role ?? u.Role ?? "-";
                             const active = u.isActive ?? u.IsActive ?? true;
                             const created = u.createdAtUtc ?? u.CreatedAtUtc ?? "";
 
@@ -454,7 +650,7 @@ function UsersTable({ users }) {
                                         </span>
                                     </td>
                                     <td className="px-3 py-2.5 text-right text-[color-mix(in_srgb,var(--ink)_60%,white)] whitespace-nowrap">
-                                        {created ? new Date(created).toLocaleDateString() : "—"}
+                                        {created ? new Date(created).toLocaleDateString() : "-"}
                                     </td>
                                 </tr>
                             );
@@ -487,7 +683,7 @@ function KeyValueGrid({ data }) {
                                 {fieldLabel(k)}
                             </td>
                             <td className="py-1.5 font-bold text-(--ink)">
-                                {v === null ? "—" : typeof v === "boolean" ? (v ? "Yes" : "No") : String(v)}
+                                {v === null ? "-" : typeof v === "boolean" ? (v ? "Yes" : "No") : String(v)}
                             </td>
                         </tr>
                     ))}
@@ -497,10 +693,12 @@ function KeyValueGrid({ data }) {
     );
 }
 
-/* ── Tool-specific field metadata ────────────────────────────────── */
+/* -- Tool-specific field metadata ---------------------------------- */
 const TOOL_FIELD_META = {
     create_order: {
-        _orderItems: true, // special flag: render order-line builder
+        _orderItems: true,
+        customerName:       {label :"Customer Full Name", type: "text", placeholder:"e.g. Kasun Perera", required: true},
+        customerPhone:      {label : "Contact Phone",   type: "tel" , placeholder: "e.g. 0771234567",   required: true}
     },
     create_inventory: {
         sku:               { label: "SKU / Code",       type: "text",   placeholder: "e.g. WDG-001" },
@@ -510,11 +708,11 @@ const TOOL_FIELD_META = {
         unitPrice:         { label: "Unit Price ($)",     type: "number", placeholder: "0.00", min: 0, step: "0.01" },
     },
     update_inventory: {
-        _inventoryPicker: true, // special flag: render inventory picker form
+        _inventoryPicker: true,
     },
     deactivate_inventory: {
-        _inventoryPicker: true, // special flag: render inventory picker form
-        _deactivateOnly: true,  // only needs product selection, no edit fields
+        _inventoryPicker: true,
+        _deactivateOnly: true,
     },
     create_user: {
         username:          { label: "Username",          type: "text",   placeholder: "e.g. john_doe" },
@@ -534,9 +732,14 @@ function fieldLabel(fieldName) {
 const inputClasses =
     "h-(--input-btn-h) px-3 text-sm bg-white border border-(--line) rounded-xs focus:outline-none focus:border-(--accent) font-mono w-full";
 
-/* ── Order-line builder (for create_order) ──────────────────────── */
-function OrderItemsBuilder({ onSubmit }) {
-    const [lines, setLines] = useState([{ inventoryId: "", quantity: "" }]);
+/* -- Order-line builder (for create_order) ------------------------ */
+function OrderItemsBuilder({ extracted = {}, initialProductId = "", onCancel, onSubmit }) {
+    const [customerName, setCustomerName] = useState(extracted.customerName || "");
+    const [customerPhone, setCustomerPhone] = useState(extracted.customerPhone || "");
+
+    const [lines, setLines] = useState([
+        { inventoryId: initialProductId ? String(initialProductId) : "", quantity: "" }
+    ]);
     const [products, setProducts] = useState([]);
     const [loadingProducts, setLoadingProducts] = useState(true);
     const [loadError, setLoadError] = useState(null);
@@ -556,7 +759,7 @@ function OrderItemsBuilder({ onSubmit }) {
                 const items = rawItems.map((p) => ({
                     id: p.id ?? p.Id,
                     sku: p.sku ?? p.SKU ?? "",
-                    name: p.name ?? p.Name ?? "—",
+                    name: p.name ?? p.Name ?? "-",
                     description: p.description ?? p.Description ?? "",
                     quantityAvailable: Number(p.quantityAvailable ?? p.QuantityAvailable ?? 0),
                     unitPrice: Number(p.unitPrice ?? p.UnitPrice ?? 0),
@@ -567,6 +770,39 @@ function OrderItemsBuilder({ onSubmit }) {
                     (p) => p.isActive
                 );
                 setProducts(active);
+
+                // Auto-match product from extracted query (e.g. create order "Spring-Clamp Terminal Block")
+                const targetQuery = extracted?.productQuery || extracted?.productName || extracted?.sku || initialProductId;
+                if (targetQuery && active.length > 0) {
+                    const queryLower = String(targetQuery).toLowerCase().trim();
+                    const matched = active.find((p) => {
+                        const pId = String(p.id).toLowerCase();
+                        const pName = (p.name || "").toLowerCase();
+                        const pSku = (p.sku || "").toLowerCase();
+                        return (
+                            pId === queryLower ||
+                            pName === queryLower ||
+                            pName.includes(queryLower) ||
+                            queryLower.includes(pName) ||
+                            pSku === queryLower
+                        );
+                    });
+
+                    if (matched) {
+                        const matchedId = String(matched.id);
+                        setLines((prev) => {
+                            if (prev.length === 1 && (!prev[0].inventoryId || prev[0].inventoryId === matchedId)) {
+                                return [
+                                    {
+                                        inventoryId: matchedId,
+                                        quantity: extracted?.quantity ? String(extracted.quantity) : (prev[0].quantity || ""),
+                                    },
+                                ];
+                            }
+                            return prev;
+                        });
+                    }
+                }
             } catch (err) {
                 if (!cancelled) setLoadError(err?.message || "Could not load inventory.");
             } finally {
@@ -610,22 +846,67 @@ function OrderItemsBuilder({ onSubmit }) {
                 quantity: parseInt(l.quantity, 10),
             }));
         if (items.length === 0) return;
-        onSubmit({ itemsJson: items });
+        onSubmit({
+            customerName: customerName.trim(),
+            customerPhone: customerPhone.trim(),
+            itemsJson: items,
+        });
     }
 
     return (
-        <form onSubmit={handleSubmit} className="mt-3 space-y-3 p-3.5 bg-(--paper) border border-(--line) rounded-xs">
-            <div className="text-xs font-mono uppercase tracking-wider text-(--ink) font-semibold">
-                Order Line Items
+        <form onSubmit={handleSubmit} className="mt-3 space-y-4 p-4 bg-(--paper) border border-(--line) rounded-xs">
+            <div className="flex items-center justify-between border-b border-(--line) pb-2">
+                <div className="text-xs font-mono uppercase tracking-wider text-(--ink) font-semibold">
+                    Customer & Order Line Items
+                </div>
+                {onCancel && (
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        className="text-xs font-mono text-[color-mix(in_srgb,var(--ink)_50%,white)] hover:text-(--accent) transition-colors"
+                    >
+                        X Cancel
+                    </button>
+                )}
             </div>
             <p className="text-xs text-[color-mix(in_srgb,var(--ink)_60%,white)]">
-                Select products and enter quantities for this order.
+                Enter customer details and select products to place this order.
             </p>
+
+            {/* Customer Inputs */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                    <label className="text-[10px] font-mono uppercase tracking-wide text-[color-mix(in_srgb,var(--ink)_60%,white)] block mb-1">
+                        Customer Full Name <span className="text-(--accent)">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        required
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="e.g. Kasun Perera"
+                        className={inputClasses}
+                    />
+                </div>
+                <div>
+                    <label className="text-[10px] font-mono uppercase tracking-wide text-[color-mix(in_srgb,var(--ink)_60%,white)] block mb-1">
+                        Contact Phone <span className="text-(--accent)">*</span>
+                    </label>
+                    <input
+                        type="tel"
+                        required
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        placeholder="e.g. 0771234567"
+                        className={inputClasses}
+                    />
+                </div>
+            </div>
 
             {loadingProducts && (
                 <div className="flex items-center gap-2 py-2 text-xs font-mono text-[color-mix(in_srgb,var(--ink)_50%,white)]">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
-                    Loading inventory…
+                    Loading inventory...
                 </div>
             )}
 
@@ -666,16 +947,16 @@ function OrderItemsBuilder({ onSubmit }) {
                                         required
                                         className={inputClasses}
                                     >
-                                        <option value="">— Select a product —</option>
+                                        <option value="">- Select a product -</option>
                                         {products.map((p) => {
                                             const pid = String(p.id ?? p.Id);
-                                            const pName = p.name ?? p.Name ?? "—";
+                                            const pName = p.name ?? p.Name ?? "-";
                                             const pSku = p.sku ?? p.SKU ?? "";
                                             const pQty = Number(p.quantityAvailable ?? p.QuantityAvailable ?? 0);
                                             const disabled = taken.has(pid);
                                             return (
                                                 <option key={pid} value={pid} disabled={disabled}>
-                                                    {pSku ? `${pSku} — ` : ""}{pName}  ({pQty} in stock)
+                                                    {pSku ? `${pSku} - ` : ""}{pName}  ({pQty} in stock)
                                                 </option>
                                             );
                                         })}
@@ -697,7 +978,7 @@ function OrderItemsBuilder({ onSubmit }) {
                                         className="h-(--input-btn-h) flex items-center justify-center text-[color-mix(in_srgb,var(--ink)_40%,white)] hover:text-(--accent) disabled:opacity-30 transition-colors"
                                         title="Remove line"
                                     >
-                                        ✕
+                                        X
                                     </button>
                                 </div>
                                 {/* Stock hint row */}
@@ -711,7 +992,7 @@ function OrderItemsBuilder({ onSubmit }) {
                                         </span>
                                         {qtyExceedsStock && (
                                             <span className="text-(--accent) font-semibold">
-                                                ⚠ Exceeds available stock
+                                                ! Exceeds available stock
                                             </span>
                                         )}
                                     </div>
@@ -739,7 +1020,7 @@ function OrderItemsBuilder({ onSubmit }) {
     );
 }
 
-/* ── Inventory picker form (for update_inventory / deactivate_inventory) ── */
+/* -- Inventory picker form (for update_inventory / deactivate_inventory) -- */
 function InventoryPickerForm({ tool, onSubmit }) {
     const isDeactivate = tool === "deactivate_inventory";
     const [products, setProducts] = useState([]);
@@ -772,7 +1053,7 @@ function InventoryPickerForm({ tool, onSubmit }) {
                 const items = rawItems.map((p) => ({
                     id: p.id ?? p.Id,
                     sku: p.sku ?? p.SKU ?? "",
-                    name: p.name ?? p.Name ?? "—",
+                    name: p.name ?? p.Name ?? "-",
                     description: p.description ?? p.Description ?? "",
                     quantityAvailable: Number(p.quantityAvailable ?? p.QuantityAvailable ?? 0),
                     unitPrice: Number(p.unitPrice ?? p.UnitPrice ?? 0),
@@ -848,7 +1129,7 @@ function InventoryPickerForm({ tool, onSubmit }) {
             {loadingProducts && (
                 <div className="flex items-center gap-2 py-2 text-xs font-mono text-[color-mix(in_srgb,var(--ink)_50%,white)]">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
-                    Loading inventory…
+                    Loading inventory...
                 </div>
             )}
 
@@ -872,16 +1153,16 @@ function InventoryPickerForm({ tool, onSubmit }) {
                             required
                             className={inputClasses}
                         >
-                            <option value="">— Choose a product —</option>
+                            <option value="">- Choose a product -</option>
                             {products.map((p) => {
                                 const pid = String(p.id ?? p.Id);
-                                const pName = p.name ?? p.Name ?? "—";
+                                const pName = p.name ?? p.Name ?? "-";
                                 const pSku = p.sku ?? p.SKU ?? "";
                                 const pQty = Number(p.quantityAvailable ?? p.QuantityAvailable ?? 0);
                                 const pActive = p.isActive ?? p.IsActive ?? true;
                                 return (
                                     <option key={pid} value={pid}>
-                                        {pSku ? `${pSku} — ` : ""}{pName}  ({pQty} in stock{!pActive ? ", Inactive" : ""})
+                                        {pSku ? `${pSku} - ` : ""}{pName}  ({pQty} in stock{!pActive ? ", Inactive" : ""})
                                     </option>
                                 );
                             })}
@@ -893,7 +1174,7 @@ function InventoryPickerForm({ tool, onSubmit }) {
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2.5 bg-white border border-(--line) rounded-xs text-[10px] font-mono">
                             <div>
                                 <span className="uppercase text-[color-mix(in_srgb,var(--ink)_50%,white)] block">Current SKU</span>
-                                <span className="font-bold text-(--ink)">{selected.sku ?? selected.SKU ?? "—"}</span>
+                                <span className="font-bold text-(--ink)">{selected.sku ?? selected.SKU ?? "-"}</span>
                             </div>
                             <div>
                                 <span className="uppercase text-[color-mix(in_srgb,var(--ink)_50%,white)] block">Stock</span>
@@ -1003,7 +1284,7 @@ function InventoryPickerForm({ tool, onSubmit }) {
                                         />
                                     </button>
                                     <span className="text-xs font-mono text-(--ink)">
-                                        Active — {formData.isActive ? "Yes" : "No"}
+                                        Active - {formData.isActive ? "Yes" : "No"}
                                     </span>
                                 </div>
                             </div>
@@ -1021,13 +1302,13 @@ function InventoryPickerForm({ tool, onSubmit }) {
     );
 }
 
-/* ── Smart param form (for everything except create_order) ────── */
+/* -- Smart param form (for everything except create_order) ------ */
 function NeedsParamsForm({ tool, missing, extracted, onSubmit }) {
     const meta = TOOL_FIELD_META[tool] || {};
 
     // If this is create_order, use the dedicated builder
     if (meta._orderItems) {
-        return <OrderItemsBuilder onSubmit={onSubmit} />;
+        return <OrderItemsBuilder extracted={extracted} onSubmit={onSubmit} />;
     }
 
     // If this is update_inventory or deactivate_inventory, use the inventory picker
@@ -1098,7 +1379,7 @@ function NeedsParamsForm({ tool, missing, extracted, onSubmit }) {
                                     />
                                 </button>
                                 <span className="text-xs font-mono text-(--ink)">
-                                    {label} — {formData[field] ? "Yes" : "No"}
+                                    {label} - {formData[field] ? "Yes" : "No"}
                                 </span>
                             </div>
                         );
@@ -1157,7 +1438,7 @@ function NeedsParamsForm({ tool, missing, extracted, onSubmit }) {
     );
 }
 
-function DataResultView({ tool, data, rawQuery }) {
+function DataResultView({ tool, data, params, rawQuery, onStartOrderWithItem }) {
     if (!data) {
         return (
             <div className="p-3 bg-(--paper) border border-(--line) rounded-xs text-xs font-mono">
@@ -1219,19 +1500,13 @@ function DataResultView({ tool, data, rawQuery }) {
     }
 
     if (data.inventory && Array.isArray(data.inventory)) {
-        if (data.inventory.length === 0) {
-            return (
-                <div className="my-2 p-4 border border-(--line) bg-(--paper) rounded-xs text-center">
-                    <p className="text-sm font-semibold text-(--ink)">
-                        No inventory products found for: "{rawQuery || tool}"
-                    </p>
-                    <p className="text-xs text-[color-mix(in_srgb,var(--ink)_60%,white)] mt-1 font-mono">
-                        Zero inventory items recorded in database.
-                    </p>
-                </div>
-            );
-        }
-        return <InventoryTable inventory={data.inventory} />;
+        return (
+            <InventoryResultView
+                inventory={data.inventory}
+                searchQuery={params?.searchQuery || extractSearchTermFromQuery(rawQuery)}
+                onStartOrderWithItem={onStartOrderWithItem}
+            />
+        );
     }
 
     if (data.users && Array.isArray(data.users)) {
@@ -1262,7 +1537,13 @@ function DataResultView({ tool, data, rawQuery }) {
             return <OrdersTable orders={data} />;
         }
         if (data[0].sku || data[0].SKU) {
-            return <InventoryTable inventory={data} />;
+            return (
+                <InventoryResultView
+                    inventory={data}
+                    searchQuery={params?.searchQuery || extractSearchTermFromQuery(rawQuery)}
+                    onStartOrderWithItem={onStartOrderWithItem}
+                />
+            );
         }
         if (data[0].username || data[0].Username) {
             return <UsersTable users={data} />;
@@ -1293,6 +1574,8 @@ function ChatMessage({
     const isPending = message.status === "pending";
     const isError = message.status === "error";
     const res = message.intentResult;
+
+    const [orderModalProductId, setOrderModalProductId] = useState(null);
 
     const resType = res?.type;
     const scores = res?.scores;
@@ -1332,9 +1615,6 @@ function ChatMessage({
                             {scores?.regex !== undefined && (
                                 <ScoreChip label="regex" value={scores.regex} />
                             )}
-                            {scores?.semantic !== undefined && (
-                                <ScoreChip label="semantic" value={scores.semantic} />
-                            )}
                         </div>
                     </div>
                 )}
@@ -1353,11 +1633,27 @@ function ChatMessage({
                 {!isUser && !isPending && !isError && res && (
                     <div>
                         {resType === "Executed" && (
-                            <DataResultView
-                                tool={res.tool}
-                                data={res.data}
-                                rawQuery={message.rawQuery}
-                            />
+                            <>
+                                <DataResultView
+                                    tool={res.tool}
+                                    data={res.data}
+                                    params={res.params}
+                                    rawQuery={message.rawQuery || message.content}
+                                    onStartOrderWithItem={(prodId) => setOrderModalProductId(prodId)}
+                                />
+                                {orderModalProductId && (
+                                    <div className="mt-3">
+                                        <OrderItemsBuilder
+                                            initialProductId={orderModalProductId}
+                                            onCancel={() => setOrderModalProductId(null)}
+                                            onSubmit={(merged) => {
+                                                setOrderModalProductId(null);
+                                                onSubmitMissingParams(message.id, "create_order", merged);
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </>
                         )}
 
                         {resType === "NeedsParams" && (

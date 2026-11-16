@@ -1,14 +1,12 @@
 use crate::config::{
-    AMBIGUITY_DELTA_THRESHOLD, HIGH_CONFIDENCE_THRESHOLD, MINIMUM_MATCH_THRESHOLD, REGEX_WEIGHT,
-    REQUIRE_MUTATION_CONFIRMATION, SEMANTIC_WEIGHT,
+    AMBIGUITY_DELTA_THRESHOLD, HIGH_CONFIDENCE_THRESHOLD, MINIMUM_MATCH_THRESHOLD,
+    REQUIRE_MUTATION_CONFIRMATION,
 };
 use crate::error::AppError;
-use crate::intent::cosine_similarity::cosine_similarity;
 use crate::intent::intent_detector::evaluate_regex_score;
 use crate::intent::parameter_extractor::extract_parameters;
 use crate::intent::preprocessing::{is_conversational_or_noise, preprocess};
 use crate::intent::regex_patterns::RegexPatterns;
-use crate::intent::semantic_engine::SemanticEngine;
 use crate::models::intent::{IntentCandidate, IntentResult, IntentScores};
 use crate::models::tool::ToolDefinition;
 use serde_json::Value;
@@ -28,7 +26,6 @@ impl IntentResolver {
         &self,
         query: &str,
         tools: &[ToolDefinition],
-        semantic_engine: Option<&SemanticEngine>,
     ) -> Result<IntentResult, AppError> {
         let preprocessed = preprocess(query);
 
@@ -51,31 +48,13 @@ impl IntentResolver {
             });
         }
 
-        let query_embedding = if let Some(engine) = semantic_engine {
-            engine.encode(&preprocessed.normalized).ok()
-        } else {
-            None
-        };
-
         let mut candidates: Vec<IntentCandidate> = Vec::new();
 
         for tool in tools {
             let (regex_score, action, entity) =
                 evaluate_regex_score(&preprocessed, tool, &self.patterns);
 
-            let mut semantic_score = 0.0f64;
-            if let (Some(q_emb), Some(engine)) = (&query_embedding, semantic_engine) {
-                let tool_text = format!("{} {}", tool.name, tool.description);
-                if let Ok(tool_emb) = engine.encode(&tool_text) {
-                    semantic_score = cosine_similarity(q_emb, &tool_emb);
-                }
-            }
-
-            let confidence = if query_embedding.is_some() {
-                (regex_score * REGEX_WEIGHT) + (semantic_score * SEMANTIC_WEIGHT)
-            } else {
-                regex_score
-            };
+            let confidence = regex_score;
 
             candidates.push(IntentCandidate {
                 tool: tool.name.clone(),
@@ -83,7 +62,6 @@ impl IntentResolver {
                 entity,
                 scores: IntentScores {
                     regex: regex_score,
-                    semantic: semantic_score,
                     confidence,
                 },
             });
@@ -255,7 +233,7 @@ mod tests {
     fn test_required_table_get_orders() {
         let resolver = IntentResolver::new();
         let tools = get_test_tools();
-        let result = resolver.resolve("get the orders", &tools, None).unwrap();
+        let result = resolver.resolve("get the orders", &tools).unwrap();
 
         match result {
             IntentResult::Executed { tool, .. } => assert_eq!(tool, "get_orders"),
@@ -268,7 +246,7 @@ mod tests {
         let resolver = IntentResolver::new();
         let tools = get_test_tools();
         let result = resolver
-            .resolve("what are the orders today", &tools, None)
+            .resolve("what are the orders today", &tools)
             .unwrap();
 
         match result {
@@ -281,7 +259,7 @@ mod tests {
     fn test_required_table_make_order_must_not_call_get_orders() {
         let resolver = IntentResolver::new();
         let tools = get_test_tools();
-        let result = resolver.resolve("make order", &tools, None).unwrap();
+        let result = resolver.resolve("make order", &tools).unwrap();
 
         match result {
             IntentResult::NeedsParams { tool, missing, .. } => {
@@ -296,7 +274,7 @@ mod tests {
     fn test_required_table_add_new_product() {
         let resolver = IntentResolver::new();
         let tools = get_test_tools();
-        let result = resolver.resolve("add a new product", &tools, None).unwrap();
+        let result = resolver.resolve("add a new product", &tools).unwrap();
 
         match result {
             IntentResult::NeedsParams { tool, missing, .. } => {
@@ -311,7 +289,7 @@ mod tests {
     fn test_required_table_show_low_stock() {
         let resolver = IntentResolver::new();
         let tools = get_test_tools();
-        let result = resolver.resolve("show low stock", &tools, None).unwrap();
+        let result = resolver.resolve("show low stock", &tools).unwrap();
 
         match result {
             IntentResult::Executed { tool, .. } => assert_eq!(tool, "get_inventory"),
@@ -323,7 +301,7 @@ mod tests {
     fn test_required_table_list_users() {
         let resolver = IntentResolver::new();
         let tools = get_test_tools();
-        let result = resolver.resolve("list users", &tools, None).unwrap();
+        let result = resolver.resolve("list users", &tools).unwrap();
 
         match result {
             IntentResult::Executed { tool, .. } => assert_eq!(tool, "get_users"),
@@ -336,7 +314,7 @@ mod tests {
         let resolver = IntentResolver::new();
         let tools = get_test_tools();
         let result = resolver
-            .resolve("register a new employee", &tools, None)
+            .resolve("register a new employee", &tools)
             .unwrap();
 
         match result {
@@ -353,7 +331,7 @@ mod tests {
         let resolver = IntentResolver::new();
         let tools = get_test_tools();
         let result = resolver
-            .resolve("do not delete this order", &tools, None)
+            .resolve("do not delete this order", &tools)
             .unwrap();
 
         match result {
@@ -367,13 +345,13 @@ mod tests {
         let resolver = IntentResolver::new();
         let tools = get_test_tools();
 
-        let res_hello = resolver.resolve("hello", &tools, None).unwrap();
+        let res_hello = resolver.resolve("hello", &tools).unwrap();
         match res_hello {
             IntentResult::Ambiguous { .. } => {}
             other => panic!("Expected Ambiguous for hello, got {other:?}"),
         }
 
-        let res_asdf = resolver.resolve("asdf", &tools, None).unwrap();
+        let res_asdf = resolver.resolve("asdf", &tools).unwrap();
         match res_asdf {
             IntentResult::Ambiguous { .. } => {}
             other => panic!("Expected Ambiguous for asdf, got {other:?}"),
@@ -385,10 +363,44 @@ mod tests {
         let resolver = IntentResolver::new();
         let tools = get_test_tools();
 
-        let result = resolver.resolve("get_users", &tools, None).unwrap();
+        let result = resolver.resolve("get_users", &tools).unwrap();
         match result {
             IntentResult::Executed { tool, .. } => assert_eq!(tool, "get_users"),
             other => panic!("Expected Executed for get_users, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_inventory_availability_query() {
+        let resolver = IntentResolver::new();
+        let tools = get_test_tools();
+
+        let result = resolver
+            .resolve("is this Pure Copper Busbar available in the inventory", &tools)
+            .unwrap();
+        match result {
+            IntentResult::Executed { tool, .. } => assert_eq!(tool, "get_inventory"),
+            other => panic!("Expected Executed for get_inventory, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_is_this_have_quoted_product_inquiry() {
+        let resolver = IntentResolver::new();
+        let tools = get_test_tools();
+
+        let result = resolver
+            .resolve(r#"is this have "Spring-Clamp Terminal Block""#, &tools)
+            .unwrap();
+        match result {
+            IntentResult::Executed { tool, params, .. } => {
+                assert_eq!(tool, "get_inventory");
+                assert_eq!(
+                    params.get("searchQuery").and_then(Value::as_str),
+                    Some("Spring-Clamp Terminal Block")
+                );
+            }
+            other => panic!("Expected Executed for get_inventory, got {other:?}"),
         }
     }
 }

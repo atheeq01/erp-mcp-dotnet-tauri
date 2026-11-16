@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from "react";
+import React, { useEffect } from "react";
 import { X, AlertCircle } from "lucide-react";
 import Button from "./Button";
 

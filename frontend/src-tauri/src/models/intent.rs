@@ -21,7 +21,6 @@ pub enum IntentEntity {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IntentScores {
     pub regex: f64,
-    pub semantic: f64,
     pub confidence: f64,
 }
 

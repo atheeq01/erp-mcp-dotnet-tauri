@@ -1,4 +1,4 @@
-﻿namespace SpilMcpServer.Models;
+namespace SpilMcpServer.Models;
 
 public class OrderItem
 {

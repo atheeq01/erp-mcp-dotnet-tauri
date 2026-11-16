@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, Trash2, AlertCircle, CheckCircle2 } from "lucide-react";
 import TextField from "./fields/TextField";
 import NumberField from "./fields/NumberField";

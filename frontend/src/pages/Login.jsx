@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, ArrowRight } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
@@ -75,7 +75,7 @@ function Login() {
                     </div>
 
                     <div className="pt-12 text-xs font-mono text-(--line) opacity-70 flex items-center justify-between">
-                        <span>Offline First Â· Tauri Core</span>
+                        <span>Offline First - Tauri Core</span>
                         <span>v1.0</span>
                     </div>
                 </section>

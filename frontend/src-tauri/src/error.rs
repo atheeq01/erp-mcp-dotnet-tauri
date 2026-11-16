@@ -6,7 +6,6 @@ use std::fmt;
 pub enum AppError {
     SessionError(String),
     McpError(String),
-    ModelError(String),
     ValidationError(String),
     ExecutionError(String),
     IoError(String),
@@ -18,7 +17,6 @@ impl fmt::Display for AppError {
         match self {
             AppError::SessionError(msg) => write!(f, "Session Error: {msg}"),
             AppError::McpError(msg) => write!(f, "MCP Error: {msg}"),
-            AppError::ModelError(msg) => write!(f, "Model Error: {msg}"),
             AppError::ValidationError(msg) => write!(f, "Validation Error: {msg}"),
             AppError::ExecutionError(msg) => write!(f, "Execution Error: {msg}"),
             AppError::IoError(msg) => write!(f, "I/O Error: {msg}"),

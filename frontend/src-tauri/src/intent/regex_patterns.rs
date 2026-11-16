@@ -16,7 +16,7 @@ impl RegexPatterns {
     pub fn new() -> Self {
         Self {
             query_action: Regex::new(
-                r"\b(get|list|show|view|find|display|fetch|check|inspect|what|which)\b",
+                r"\b(get|list|show|view|find|display|fetch|check|inspect|what|which|search|available|availability|have|has|got)\b",
             )
             .expect("Valid query regex"),
             create_action: Regex::new(
@@ -70,11 +70,16 @@ impl RegexPatterns {
         if self.order_entity.is_match(text) {
             return IntentEntity::Order;
         }
-        if self.inventory_entity.is_match(text) {
-            return IntentEntity::Inventory;
-        }
         if self.user_entity.is_match(text) {
             return IntentEntity::User;
+        }
+        if self.inventory_entity.is_match(text)
+            || text.contains('"')
+            || text.contains('\'')
+            || text.contains("available")
+            || text.contains("stock")
+        {
+            return IntentEntity::Inventory;
         }
         IntentEntity::Unknown
     }

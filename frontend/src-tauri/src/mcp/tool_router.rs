@@ -62,8 +62,15 @@ pub fn execute_tool(
         }
     }
 
+    let mut call_args = arguments.clone();
+    if let Some(props) = tool.input_schema.get("properties").and_then(Value::as_object) {
+        if let Some(args_obj) = call_args.as_object_mut() {
+            args_obj.retain(|k, _| props.contains_key(k) || k == "sessionToken");
+        }
+    }
+
     let raw_result = client
-        .call_tool(&tool.name, arguments)
+        .call_tool(&tool.name, call_args)
         .map_err(AppError::McpError)?;
 
     extract_tool_payload(raw_result)

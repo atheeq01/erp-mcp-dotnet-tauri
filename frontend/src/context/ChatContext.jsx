@@ -14,7 +14,7 @@ export function ChatProvider({ children }) {
                 type: "Executed",
                 tool: "system",
                 intent: "Operator Assistant Initialized",
-                scores: { regex_score: 1.0, semantic_score: 1.0, confidence: 1.0 },
+                scores: { regex: 1.0, confidence: 1.0 },
                 params: {},
                 data: {
                     message: "SPIL Operational Assistant is ready. Enter queries for inventory, orders, low stock, or users."
@@ -56,7 +56,7 @@ export function ChatProvider({ children }) {
                     type: "Executed",
                     tool: "system",
                     intent: "Conversation Reset",
-                    scores: { regex_score: 1.0, semantic_score: 1.0, confidence: 1.0 },
+                    scores: { regex: 1.0, confidence: 1.0 },
                     params: {},
                     data: {
                         message: "History cleared. Live ERP tools ready."
@@ -180,7 +180,7 @@ export function ChatProvider({ children }) {
                                   type: "Executed",
                                   tool,
                                   intent: `Confirmed: ${tool}`,
-                                  scores: { regex_score: 1.0, semantic_score: 1.0, confidence: 1.0 },
+                                  scores: { regex: 1.0, confidence: 1.0 },
                                   params,
                                   data,
                               },
@@ -234,7 +234,7 @@ export function ChatProvider({ children }) {
                                   type: "Executed",
                                   tool,
                                   intent: `Completed: ${tool}`,
-                                  scores: { regex_score: 1.0, semantic_score: 1.0, confidence: 1.0 },
+                                  scores: { regex: 1.0, confidence: 1.0 },
                                   params: mergedParams,
                                   data,
                               },

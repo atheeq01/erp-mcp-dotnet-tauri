@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { callMcpTool } from "../services/mcpService";
 import DataTable from "../components/common/DataTable";
@@ -25,8 +25,8 @@ function Users() {
                 : result.users ?? result.items ?? [];
             const userList = rawUsers.map((u) => ({
                 id: u.id ?? u.Id,
-                username: u.username ?? u.Username ?? "—",
-                role: u.role ?? u.Role ?? "—",
+                username: u.username ?? u.Username ?? "-",
+                role: u.role ?? u.Role ?? "-",
                 isActive: Boolean(u.isActive ?? u.IsActive ?? true),
                 createdAtUtc: u.createdAtUtc ?? u.CreatedAtUtc,
             }));
@@ -61,7 +61,7 @@ function Users() {
             render: (val, row) => (
                 <div className="flex items-center gap-2">
                     <span className="font-semibold text-(--ink)">
-                        {val || row.username || row.Username || "—"}
+                        {val || row.username || row.Username || "-"}
                     </span>
                 </div>
             ),
@@ -72,7 +72,7 @@ function Users() {
             sortable: true,
             width: "160px",
             render: (val, row) => {
-                const role = val || row.role || row.Role || "—";
+                const role = val || row.role || row.Role || "-";
                 return (
                     <span className="font-mono text-xs text-(--ink)">
                         {role}
@@ -102,7 +102,7 @@ function Users() {
             width: "160px",
             render: (val, row) => {
                 const raw = val ?? row.createdAtUtc ?? row.CreatedAtUtc;
-                if (!raw) return "—";
+                if (!raw) return "-";
                 return (
                     <span className="font-mono tabular-nums text-[color-mix(in_srgb,var(--ink)_65%,white)]">
                         {new Date(raw).toLocaleDateString()}

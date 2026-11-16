@@ -32,7 +32,6 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "resources/models/all-MiniLM-L6-v2/*",
       "bin/*"
     ]
   }

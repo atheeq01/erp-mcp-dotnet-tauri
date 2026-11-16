@@ -1,4 +1,4 @@
-﻿import React, { useState, useId } from "react";
+import React, { useState, useId } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 function PasswordField({
@@ -7,7 +7,7 @@ function PasswordField({
     label,
     value,
     onChange,
-    placeholder = "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢",
+    placeholder = "--------",
     hint = "",
     error = "",
     required = false,

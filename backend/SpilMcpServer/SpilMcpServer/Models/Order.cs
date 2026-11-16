@@ -1,4 +1,4 @@
-﻿namespace SpilMcpServer.Models;
+namespace SpilMcpServer.Models;
 
 public class Order
 {
@@ -7,6 +7,10 @@ public class Order
     public string OrderNumber { get; set; } = string.Empty;
 
     public int UserId { get; set; }
+    
+    public string CustomerName { get; set; } = string.Empty;
+    
+    public string CustomerPhone { get; set; } = string.Empty;
 
     public decimal TotalAmount { get; set; }
 

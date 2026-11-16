@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SpilMcpServer.Models;
 
 namespace SpilMcpServer.Data;
@@ -66,7 +66,14 @@ public class AppDbContext : DbContext
             entity.Property(o => o.OrderNumber)
                 .HasMaxLength(50)
                 .IsRequired();
-
+            entity.Property(o => o.CustomerName)
+                .HasMaxLength(100)
+                .IsRequired();
+            
+            entity.Property(o => o.CustomerPhone)
+                .HasMaxLength(20)
+                .IsRequired();
+            
             entity.Property(o => o.TotalAmount)
                 .HasPrecision(18, 2);
         });

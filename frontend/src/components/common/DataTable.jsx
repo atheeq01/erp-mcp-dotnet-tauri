@@ -232,7 +232,7 @@ function DataTable({
                                                             : "text-left"
                                                     }`}
                                                 >
-                                                    {col.render ? col.render(cellVal, item, index) : (cellVal ?? "—")}
+                                                    {col.render ? col.render(cellVal, item, index) : (cellVal ?? "-")}
                                                 </td>
                                             );
                                         })}

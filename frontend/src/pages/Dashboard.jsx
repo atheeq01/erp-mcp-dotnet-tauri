@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     AlertTriangle,
@@ -51,13 +51,13 @@ function Dashboard() {
                 : ordRes.orders ?? ordRes.items ?? [];
             const ordList = rawOrd.map((o) => ({
                 id: o.id ?? o.Id,
-                orderNumber: o.orderNumber ?? o.OrderNumber ?? "—",
-                username: o.username ?? o.Username ?? o.userId ?? o.UserId ?? "—",
+                orderNumber: o.orderNumber ?? o.OrderNumber ?? "-",
+                username: o.username ?? o.Username ?? o.userId ?? o.UserId ?? "-",
                 totalAmount: Number(o.totalAmount ?? o.TotalAmount ?? 0),
                 createdAtUtc: o.createdAtUtc ?? o.CreatedAtUtc,
                 items: (o.items ?? o.Items ?? []).map((i) => ({
                     inventoryId: i.inventoryId ?? i.InventoryId,
-                    productName: i.productName ?? i.ProductName ?? "—",
+                    productName: i.productName ?? i.ProductName ?? "-",
                     quantity: Number(i.quantity ?? i.Quantity ?? 0),
                     unitPrice: Number(i.unitPrice ?? i.UnitPrice ?? 0),
                     totalPrice: Number(i.totalPrice ?? i.TotalPrice ?? 0),
@@ -103,7 +103,7 @@ function Dashboard() {
             header: "Order Number",
             render: (val, row) => (
                 <span className="font-mono font-medium text-(--ink)">
-                    {val ?? row.orderNumber ?? "—"}
+                    {val ?? row.orderNumber ?? "-"}
                 </span>
             ),
         },
@@ -111,7 +111,7 @@ function Dashboard() {
             key: "username",
             header: "Placed By",
             render: (val, row) =>
-                val ?? row.userId ?? "—",
+                val ?? row.userId ?? "-",
         },
         {
             key: "orderItems",
@@ -141,7 +141,7 @@ function Dashboard() {
             align: "right",
             render: (val, row) => {
                 const raw = val ?? row.createdAtUtc;
-                if (!raw) return "—";
+                if (!raw) return "-";
                 return (
                     <span className="font-mono tabular-nums text-[color-mix(in_srgb,var(--ink)_65%,white)]">
                         {new Date(raw).toLocaleDateString()}
@@ -218,10 +218,10 @@ function Dashboard() {
                                      : "text-(--ink)"
                             }`}
                         >
-                            {loading ? "—" : lowStockItems.length}
+                            {loading ? "-" : lowStockItems.length}
                         </span>
                         <p className="text-xs text-[color-mix(in_srgb,var(--ink)_55%,white)] mt-1 font-mono">
-                            SKUs with ≤ 20 units remaining
+                            SKUs with <= 20 units remaining
                         </p>
                     </div>
                 </div>
@@ -235,7 +235,7 @@ function Dashboard() {
                     </div>
                     <div className="mt-4">
                         <span className="font-mono text-3xl font-bold tabular-nums text-(--ink)">
-                            {loading ? "—" : ordersToday.length}
+                            {loading ? "-" : ordersToday.length}
                         </span>
                         <p className="text-xs text-[color-mix(in_srgb,var(--ink)_55%,white)] mt-1 font-mono">
                             Orders registered today
@@ -252,7 +252,7 @@ function Dashboard() {
                     </div>
                     <div className="mt-4">
                         <span className="font-mono text-3xl font-bold tabular-nums text-(--ink)">
-                            {loading ? "—" : `$${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                            {loading ? "-" : `$${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         </span>
                         <p className="text-xs text-[color-mix(in_srgb,var(--ink)_55%,white)] mt-1 font-mono">
                             Total across {orders.length} orders
@@ -269,7 +269,7 @@ function Dashboard() {
                     </div>
                     <div className="mt-4">
                         <span className="font-mono text-3xl font-bold tabular-nums text-(--ink)">
-                            {loading ? "—" : totalStockUnits.toLocaleString()}
+                            {loading ? "-" : totalStockUnits.toLocaleString()}
                         </span>
                         <p className="text-xs text-[color-mix(in_srgb,var(--ink)_55%,white)] mt-1 font-mono">
                             Across {inventory.length} distinct SKUs

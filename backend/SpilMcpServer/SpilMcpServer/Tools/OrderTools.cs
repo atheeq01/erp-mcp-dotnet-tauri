@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Data;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -57,6 +57,8 @@ public static class OrderTools
             {
                 id = o.Id,
                 orderNumber = o.OrderNumber,
+                customerName = o.CustomerName,
+                customerPhone = o.CustomerPhone,
                 totalAmount = o.TotalAmount,
                 createdAtUtc = o.CreatedAtUtc,
                 username = o.User!.Username,
@@ -84,6 +86,8 @@ public static class OrderTools
     public static async Task<string> CreateOrder(
         string sessionToken,
         string itemsJson,
+        string customerName,
+        string customerPhone,
         AppDbContext db,
         SessionStore sessions)
     {
@@ -96,6 +100,24 @@ public static class OrderTools
             {
                 success = false,
                 message = "Invalid or expired session."
+            });
+        }
+
+        if (string.IsNullOrWhiteSpace(customerName))
+        {
+            return JsonSerializer.Serialize(new
+            {
+                success = false,
+                message = "You must specify a customer name."
+            });
+        }
+
+        if (string.IsNullOrWhiteSpace(customerPhone))
+        {
+            return JsonSerializer.Serialize(new
+            {
+                sucess = false,
+                message = "You must specify a customer phone."
             });
         }
 
@@ -218,10 +240,10 @@ public static class OrderTools
 
             var order = new Order
             {
-                OrderNumber = "ORD-" +
-                    Guid.NewGuid().ToString("N")[..12].ToUpperInvariant(),
-
+                OrderNumber =  $"ORD-{DateTime.UtcNow:yyyyMMddHHmmss}-{Random.Shared.Next(100, 999)}",
                 UserId = user.Id,
+                CustomerName = customerName.Trim(),
+                CustomerPhone = customerPhone.Trim(),
                 CreatedAtUtc = DateTime.UtcNow
             };
 
@@ -256,6 +278,8 @@ public static class OrderTools
                 message = "Order created successfully.",
                 orderId = order.Id,
                 orderNumber = order.OrderNumber,
+                customerName = order.CustomerName,
+                customerPhone = order.CustomerPhone,
                 totalAmount = order.TotalAmount,
                 items = order.OrderItems.Count
             });

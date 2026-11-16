@@ -160,7 +160,7 @@ function Inventory() {
             width: "160px",
             render: (val, row) => (
                 <span className="font-mono font-medium text-(--ink)">
-                    {val || row.sku || row.SKU || "—"}
+                    {val || row.sku || row.SKU || "-"}
                 </span>
             ),
         },
@@ -169,7 +169,7 @@ function Inventory() {
             header: "Product Specification",
             sortable: true,
             render: (val, row) => {
-                const name = val || row.name || row.Name || "—";
+                const name = val || row.name || row.Name || "-";
                 const desc = row.description || row.Description;
                 return (
                     <div>
@@ -307,7 +307,7 @@ function Inventory() {
                         Registered SKUs
                     </span>
                     <span className="font-mono text-xl font-bold tabular-nums text-(--ink)">
-                        {loading ? "—" : items.length}
+                        {loading ? "-" : items.length}
                     </span>
                 </div>
 
@@ -316,7 +316,7 @@ function Inventory() {
                         Active Products
                     </span>
                     <span className="font-mono text-xl font-bold tabular-nums text-(--ink)">
-                        {loading ? "—" : activeCount}
+                        {loading ? "-" : activeCount}
                     </span>
                 </div>
 
@@ -325,7 +325,7 @@ function Inventory() {
                         Physical Stock Units
                     </span>
                     <span className="font-mono text-xl font-bold tabular-nums text-(--ink)">
-                        {loading ? "—" : totalUnits.toLocaleString()}
+                        {loading ? "-" : totalUnits.toLocaleString()}
                     </span>
                 </div>
             </div>
@@ -377,13 +377,13 @@ function Inventory() {
                                 <div className="flex justify-between items-center">
                                     <span className="text-[color-mix(in_srgb,var(--ink)_60%,white)] uppercase text-[10px]">Product:</span>
                                     <span className="font-bold text-(--ink)">
-                                        {confirmAction?.item?.name ?? confirmAction?.item?.Name ?? "—"}
+                                        {confirmAction?.item?.name ?? confirmAction?.item?.Name ?? "-"}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-[color-mix(in_srgb,var(--ink)_60%,white)] uppercase text-[10px]">SKU:</span>
                                     <span className="font-bold text-(--ink)">
-                                        {confirmAction?.item?.sku ?? confirmAction?.item?.SKU ?? "—"}
+                                        {confirmAction?.item?.sku ?? confirmAction?.item?.SKU ?? "-"}
                                     </span>
                                 </div>
                             </div>
@@ -400,13 +400,13 @@ function Inventory() {
                                 <div className="flex justify-between items-center">
                                     <span className="text-[color-mix(in_srgb,var(--ink)_60%,white)] uppercase text-[10px]">Product:</span>
                                     <span className="font-bold text-(--ink)">
-                                        {confirmAction?.item?.name ?? confirmAction?.item?.Name ?? "—"}
+                                        {confirmAction?.item?.name ?? confirmAction?.item?.Name ?? "-"}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-[color-mix(in_srgb,var(--ink)_60%,white)] uppercase text-[10px]">SKU:</span>
                                     <span className="font-bold text-(--ink)">
-                                        {confirmAction?.item?.sku ?? confirmAction?.item?.SKU ?? "—"}
+                                        {confirmAction?.item?.sku ?? confirmAction?.item?.SKU ?? "-"}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">

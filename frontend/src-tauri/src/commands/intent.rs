@@ -69,7 +69,7 @@ pub fn process_intent(
 
     let resolution = state
         .resolver
-        .resolve(clean_prompt, &tools_list, state.model.as_ref())?;
+        .resolve(clean_prompt, &tools_list)?;
 
     // Pre-execution RBAC verification: do not ask for params or confirm actions the user cannot execute
     let target_tool = match &resolution {

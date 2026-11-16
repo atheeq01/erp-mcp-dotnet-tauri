@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Send, Square } from "lucide-react";
 import Button from "../common/Button";
 

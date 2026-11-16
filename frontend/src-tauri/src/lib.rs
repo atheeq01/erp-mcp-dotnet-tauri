@@ -12,7 +12,6 @@ use commands::auth::{
 use commands::intent::{execute_confirmed_intent, process_intent};
 use commands::tools::{call_authenticated_tool, get_mcp_tools};
 use intent::intent_resolver::IntentResolver;
-use intent::semantic_engine::SemanticEngine;
 use mcp::client::McpClient;
 use mcp::tool_router::fetch_tool_definitions;
 use state::McpState;
@@ -27,19 +26,10 @@ pub fn run() {
             let mut client = McpClient::start().map_err(std::io::Error::other)?;
             let initial_tools = fetch_tool_definitions(&mut client).unwrap_or_else(|_| Vec::new());
 
-            let semantic_engine = match SemanticEngine::find_and_load() {
-                Ok(engine) => Some(engine),
-                Err(err) => {
-                    eprintln!("Warning: ONNX semantic model could not be loaded: {err}. Falling back to regex engine.");
-                    None
-                }
-            };
-
             app.manage(McpState {
                 client: Mutex::new(client),
                 session: Mutex::new(None),
                 tools: Mutex::new(initial_tools),
-                model: semantic_engine,
                 resolver: IntentResolver::new(),
             });
 

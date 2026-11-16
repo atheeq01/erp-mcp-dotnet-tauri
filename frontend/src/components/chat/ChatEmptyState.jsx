@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { ArrowRight, Boxes, FileSpreadsheet, Users, DollarSign } from "lucide-react";
 
 function ChatEmptyState({ onSelectPrompt }) {
@@ -7,7 +7,7 @@ function ChatEmptyState({ onSelectPrompt }) {
             icon: Boxes,
             title: "Check Low Stock Items",
             query: "show low stock",
-            description: "Audits all items at or below safety reorder threshold (â‰¤ 25 units)",
+            description: "Audits all items at or below safety reorder threshold (<= 25 units)",
         },
         {
             icon: DollarSign,

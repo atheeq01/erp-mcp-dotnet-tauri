@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SpilMcpServer.Data;
 using SpilMcpServer.Models;
 

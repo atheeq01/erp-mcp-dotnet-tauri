@@ -1,4 +1,4 @@
-﻿import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Trash2, ArrowDown } from "lucide-react";
 import { useChat } from "../context/ChatContext";
 import ChatMessage from "../components/chat/ChatMessage";
@@ -69,10 +69,10 @@ function Chat() {
                 <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-(--accent)" />
                     <span className="font-mono text-xs font-semibold text-(--ink)">
-                        Hybrid Intent MCP Terminal
+                        Regex Intent MCP Terminal
                     </span>
                     <span className="text-[11px] text-[color-mix(in_srgb,var(--ink)_50%,white)]">
-                        Â· ONNX MiniLM-L6-v2 + Regex Matching
+                        - Pure Regex Intent Engine
                     </span>
                 </div>
 
