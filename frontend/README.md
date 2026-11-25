@@ -1,46 +1,27 @@
-# SPIL Mini ERP — Frontend & Desktop Shell (Tauri 2 + React 19)
+# SPIL Mini ERP desktop frontend
 
-> Desktop ERP interface and AI Operations Chat client built with **React 19**, **Vite**, **Tailwind CSS**, and **Tauri 2 (Rust)**.
+This directory contains the React 19/Vite interface and the Tauri 2 desktop shell. For system architecture, SQL Server setup, the Rust agent, MCP servers, Claude Desktop, and ChatGPT connection options, read the [root README](../README.md).
 
----
+## Current screens
 
-## Features
+- Dashboard, Inventory, Orders, and Users use the ERP MCP server backed by SQL Server.
+- **Incidents & Release** lets Admins inspect mock service telemetry, deployment history, runbooks, the release checklist, and incident tickets. The **Create incident ticket** form saves a new ticket after a review step.
+- **AI Assistant** uses the deterministic ERP intent resolver and the Rust agent fallback. When the agent proposes a ticket, approve or reject it in the chat card. There is no separate approval queue in Operations.
+- LLM Settings saves the provider URL and model locally. Set `LLM_API_KEY` in the root `.env` or process environment; the settings screen does not save API keys.
 
-- **Enterprise ERP Views:** Real-time Inventory Management, Atomic Order Fulfillment, and User Administration.
-- **Incident & Release Operations:** Admin operators can inspect service health, logs, deployments, release checklist, runbooks, and incident tickets, then review and create a ticket manually.
-- **Approval Queue:** Pending AI tool actions can be approved or rejected from the Operations screen as well as the chat card.
-- **Dual-Path AI Ops Chat:**
-  - `⚡ Fast Path`: Instantaneous deterministic regex resolution (< 5ms) for standard ERP commands.
-  - `🤖 AI Agent`: Fallback to autonomous multi-step incident triage and release readiness analysis powered by `agent-client`.
-- **Interactive Human-in-the-Loop (HITL) Cards:** Visual approval dialogs rendered in real time for state-mutating actions (e.g., creating incident tickets).
-- **In-App LLM Settings:** Manage provider URLs and model names locally. Set API keys through the root `.env` file or process environment.
-- **Strict Role-Based Access Control (RBAC):** AI Agent operations are restricted to `Admin` operators.
+## Development
 
----
-
-## Development Setup
-
-From the `frontend/` directory:
+Run from the repository root:
 
 ```powershell
-# 1. Install Node.js dependencies
-npm install
-
-# 2. Run in development mode (starts Vite dev server and launches Tauri window)
-npm run tauri dev
+dotnet build backend/SpilMcpServer/SpilMcpServer/SpilMcpServer.csproj
+dotnet build mcp-server/ops-telemetry-mcp.csproj
+npm --prefix frontend install
+npm --prefix frontend run tauri dev
 ```
 
-Run `cargo test --locked` in `src-tauri/` to check the Rust commands.
+The ERP server needs a working SQL Server connection string. AI chat also needs a valid root `.env` with `LLM_API_KEY`. The Operations page can use mock telemetry without an LLM key. Run `npm --prefix frontend run build` for a frontend build and `cargo test --manifest-path frontend/src-tauri/Cargo.toml` for Rust tests.
 
----
+## Packaging status
 
-## Production Build
-
-To build the standalone Windows desktop installer:
-
-```powershell
-npm run tauri build
-```
-
-The resulting installer is generated at:
-`src-tauri/target/release/bundle/nsis/SPIL Mini ERP_0.1.0_x64-setup.exe`
+`npm --prefix frontend run build:app` publishes the ERP backend and builds a desktop bundle. The current bundle does not include the operations telemetry executable, fixture data, or Node filesystem MCP package. See [Build and distribution](../README.md#build-and-distribution) before using an installer outside this checkout.
