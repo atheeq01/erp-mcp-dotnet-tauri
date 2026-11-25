@@ -1,0 +1,31 @@
+# Service Configuration Manifest
+environment: production
+datacenter: us-east-1
+
+services:
+  order-service:
+    version: "2.4.1"
+    port: 8080
+    replicas: 3
+    inventory_service:
+      endpoint: "http://inventory-service.internal:8082"
+      timeout_ms: 3000
+      max_retries: 0
+    circuit_breaker:
+      failure_rate_threshold_pct: 50
+      recovery_time_sec: 60
+    rollback_plan: null
+
+  auth-service:
+    version: "1.9.0"
+    port: 8081
+    replicas: 2
+    session:
+      timeout_seconds: 3600
+      redis_cluster: "redis-auth.internal:6379"
+
+  inventory-service:
+    version: "3.1.1"
+    port: 8082
+    concurrency: 12
+    warehouse_sync_interval_sec: 30

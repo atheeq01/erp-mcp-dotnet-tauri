@@ -6,6 +6,7 @@ import {
     FileSpreadsheet,
     Users,
     Bot,
+    Activity,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -35,6 +36,12 @@ const navigationItems = [
         icon: Users,
     },
     {
+        label: "Incidents & Release",
+        path: "/operations",
+        roles: ["Admin"],
+        icon: Activity,
+    },
+    {
         label: "AI Assistant",
         path: "/chat",
         roles: ["Admin", "Sales", "Store"],
@@ -49,10 +56,21 @@ function Sidebar() {
         (item) => !item.roles || item.roles.includes(user?.role)
     );
 
-    return (
+    return (<>
+        <div className="md:hidden shrink-0 bg-(--ink) text-white border-b border-black">
+            <div className="px-4 py-3 font-display font-extrabold text-sm tracking-tight">SPIL MINI ERP</div>
+            <nav aria-label="System modules" className="flex overflow-x-auto gap-1 px-2 pb-2">
+                {allowedItems.map((item) => {
+                    const Icon = item.icon;
+                    return <NavLink key={item.path} to={item.path} className={({ isActive }) =>
+                        `flex shrink-0 items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 ${isActive ? "border-(--accent) text-white" : "border-transparent text-(--line)"}`
+                    }><Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />{item.label}</NavLink>;
+                })}
+            </nav>
+        </div>
         <aside
             style={{ width: "var(--sidebar-w)" }}
-            className="shrink-0 min-h-screen bg-(--ink) text-(--line) flex flex-col justify-between border-r border-black select-none z-20"
+            className="hidden md:flex shrink-0 h-full min-h-0 bg-(--ink) text-(--line) flex-col justify-between border-r border-black select-none z-20"
         >
             <div>
                 <div
@@ -117,7 +135,7 @@ function Sidebar() {
                 </div>
             </div>
         </aside>
-    );
+    </>);
 }
 
 export default Sidebar;

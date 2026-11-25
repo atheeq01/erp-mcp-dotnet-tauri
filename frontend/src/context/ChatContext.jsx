@@ -1,7 +1,25 @@
-import React, { createContext, useContext, useState, useRef, useCallback } from "react";
-import { processIntent, executeConfirmedIntent, callMcpTool } from "../services/mcpService";
+import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
+import { listen } from "@tauri-apps/api/event";
+import {
+    processIntent,
+    executeConfirmedIntent,
+    callMcpTool,
+    sendApprovalResponse,
+} from "../services/mcpService";
 
 const ChatContext = createContext(null);
+
+function formatTauriError(err) {
+    if (!err) return "Unknown error occurred.";
+    if (typeof err === "string") return err;
+    if (err.kind && err.message) return `[${err.kind}] ${err.message}`;
+    if (err.message) return String(err.message);
+    try {
+        return JSON.stringify(err);
+    } catch {
+        return String(err);
+    }
+}
 
 export function ChatProvider({ children }) {
     const [messages, setMessages] = useState([
@@ -24,13 +42,72 @@ export function ChatProvider({ children }) {
     ]);
 
     const [isPending, setIsPending] = useState(false);
-    const abortControllerRef = useRef(null);
+    const activeRequestRef = useRef(null);
+    const cancelledRequestIdsRef = useRef(new Set());
+    const messagesRef = useRef(messages);
+    messagesRef.current = messages;
+
+    useEffect(() => {
+        let unlisten = null;
+        listen("approval_request", (event) => {
+            const payload = event.payload;
+            const messageId = payload?.client_request_id;
+            if (messageId && cancelledRequestIdsRef.current.has(messageId)) {
+                sendApprovalResponse(false, payload.request_id).catch(() => {});
+                return;
+            }
+            if (!messageId) return;
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === messageId && msg.status === "pending"
+                        ? { ...msg, pendingApproval: payload }
+                        : msg
+                )
+            );
+        })
+            .then((fn) => {
+                unlisten = fn;
+            })
+            .catch(() => {
+                // Non-Tauri browser preview: no event listener needed
+            });
+
+        return () => {
+            if (unlisten) unlisten();
+        };
+    }, []);
+
+    const respondToAgentApproval = useCallback(async (messageId, approved, requestId) => {
+        try {
+            const result = await sendApprovalResponse(approved, requestId);
+            if (!result?.delivered) throw new Error("This approval request has expired.");
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === messageId ? { ...msg, pendingApproval: null, errorText: null } : msg
+                )
+            );
+        } catch (err) {
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === messageId ? { ...msg, errorText: formatTauriError(err) } : msg
+                )
+            );
+        }
+    }, []);
 
     const cancelRequest = useCallback(() => {
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-            abortControllerRef.current = null;
+        const active = activeRequestRef.current;
+        if (active) {
+            cancelledRequestIdsRef.current.add(active.id);
+            active.controller.abort();
+            activeRequestRef.current = null;
         }
+        const pendingApprovals = messagesRef.current
+            .filter((msg) => msg.status === "pending" && msg.pendingApproval?.request_id)
+            .map((msg) => msg.pendingApproval.request_id);
+        pendingApprovals.forEach((requestId) => {
+            sendApprovalResponse(false, requestId).catch(() => {});
+        });
         setIsPending(false);
         setMessages((prev) =>
             prev.map((msg) =>
@@ -38,7 +115,8 @@ export function ChatProvider({ children }) {
                     ? {
                           ...msg,
                           status: "error",
-                          errorText: "Execution aborted by operator.",
+                          pendingApproval: null,
+                          errorText: "Stopped waiting for this response. Proposed writes were rejected.",
                       }
                     : msg
             )
@@ -46,6 +124,7 @@ export function ChatProvider({ children }) {
     }, []);
 
     const clearConversation = useCallback(() => {
+        if (activeRequestRef.current) cancelRequest();
         setMessages([
             {
                 id: `welcome-${Date.now()}`,
@@ -64,14 +143,15 @@ export function ChatProvider({ children }) {
                 }
             },
         ]);
-    }, []);
+    }, [cancelRequest]);
 
     const sendMessage = useCallback(
         async (content, retryMessageId = null) => {
             const trimmed = content.trim();
             if (!trimmed) return;
 
-            const assistantMsgId = `asst-${Date.now()}`;
+            if (activeRequestRef.current) return;
+            const assistantMsgId = `asst-${crypto.randomUUID()}`;
 
             if (retryMessageId) {
                 setMessages((prev) => prev.filter((m) => m.id !== retryMessageId));
@@ -79,7 +159,7 @@ export function ChatProvider({ children }) {
                 setMessages((prev) => [
                     ...prev,
                     {
-                        id: `usr-${Date.now()}`,
+                        id: `usr-${crypto.randomUUID()}`,
                         role: "user",
                         content: trimmed,
                         timestamp: new Date().toISOString(),
@@ -102,10 +182,24 @@ export function ChatProvider({ children }) {
 
             setIsPending(true);
             const controller = new AbortController();
-            abortControllerRef.current = controller;
+            activeRequestRef.current = { id: assistantMsgId, controller };
+
+            const historyPayload = messagesRef.current
+                .filter((m) => m.id !== "system-welcome" && !String(m.id).startsWith("welcome-") && m.id !== retryMessageId)
+                .map((m) => {
+                    if (m.role === "user" && m.content) {
+                        return { role: "user", content: m.content };
+                    }
+                    if (m.role === "assistant" && m.intentResult?.answer) {
+                        return { role: "assistant", content: m.intentResult.answer };
+                    }
+                    return null;
+                })
+                .filter(Boolean)
+                .slice(-8);
 
             try {
-                const result = await processIntent(trimmed);
+                const result = await processIntent(trimmed, historyPayload, assistantMsgId);
 
                 if (controller.signal.aborted) {
                     setMessages((prev) =>
@@ -114,7 +208,8 @@ export function ChatProvider({ children }) {
                                 ? {
                                       ...msg,
                                       status: "error",
-                                      errorText: "Query was cancelled by user.",
+                                      pendingApproval: null,
+                                      errorText: "Stopped waiting for this response. Proposed writes were rejected.",
                                   }
                                 : msg
                         )
@@ -128,6 +223,8 @@ export function ChatProvider({ children }) {
                             ? {
                                   ...msg,
                                   status: "done",
+                                  pendingApproval: null,
+                                  routeMode: result?.type === "AgentResponse" ? "ai" : "fastpath",
                                   intentResult: result,
                               }
                             : msg
@@ -141,7 +238,7 @@ export function ChatProvider({ children }) {
                                 ? {
                                       ...msg,
                                       status: "error",
-                                      errorText: "Query was cancelled by user.",
+                                      errorText: "Stopped waiting for this response. Proposed writes were rejected.",
                                   }
                                 : msg
                         )
@@ -153,15 +250,18 @@ export function ChatProvider({ children }) {
                                 ? {
                                       ...msg,
                                       status: "error",
-                                      errorText: err?.message || String(err),
+                                      pendingApproval: null,
+                                      errorText: formatTauriError(err),
                                   }
                                 : msg
                         )
                     );
                 }
             } finally {
-                setIsPending(false);
-                abortControllerRef.current = null;
+                if (activeRequestRef.current?.id === assistantMsgId) {
+                    setIsPending(false);
+                    activeRequestRef.current = null;
+                }
             }
         },
         []
@@ -195,7 +295,7 @@ export function ChatProvider({ children }) {
                         ? {
                               ...msg,
                               status: "error",
-                              errorText: err?.message || String(err),
+                              errorText: formatTauriError(err),
                           }
                         : msg
                 )
@@ -249,7 +349,7 @@ export function ChatProvider({ children }) {
                         ? {
                               ...msg,
                               status: "error",
-                              errorText: err?.message || String(err),
+                              errorText: formatTauriError(err),
                           }
                         : msg
                 )
@@ -270,6 +370,7 @@ export function ChatProvider({ children }) {
                 confirmAction,
                 cancelAction,
                 submitMissingParams,
+                respondToAgentApproval,
             }}
         >
             {children}

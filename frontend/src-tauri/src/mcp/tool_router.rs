@@ -7,11 +7,28 @@ use serde_json::{Value, json};
 
 pub fn extract_tool_payload(result: Value) -> Result<Value, AppError> {
     if result.get("isError").and_then(Value::as_bool) == Some(true) {
+        let content_msg = result
+            .get("content")
+            .and_then(Value::as_array)
+            .and_then(|arr| {
+                let texts: Vec<&str> = arr
+                    .iter()
+                    .filter_map(|item| item.get("text").and_then(Value::as_str))
+                    .collect();
+                if texts.is_empty() {
+                    None
+                } else {
+                    Some(texts.join("\n"))
+                }
+            });
+
         let err_msg = result
             .get("message")
             .and_then(Value::as_str)
-            .unwrap_or("MCP tool returned an error condition");
-        return Err(AppError::McpError(err_msg.to_string()));
+            .map(str::to_string)
+            .or(content_msg)
+            .unwrap_or_else(|| "MCP tool returned an error condition".to_string());
+        return Err(AppError::McpError(err_msg));
     }
 
     if let Some(data) = result.get("structuredContent") {
@@ -44,13 +61,12 @@ pub fn execute_tool(
             .token
             .clone();
 
-        if let Some(obj) = arguments.as_object_mut() {
-            if let Some(items_val) = obj.get("itemsJson") {
-                if items_val.is_array() || items_val.is_object() {
-                    let s = items_val.to_string();
-                    obj.insert("itemsJson".to_string(), json!(s));
-                }
-            }
+        if let Some(obj) = arguments.as_object_mut()
+            && let Some(items_val) = obj.get("itemsJson")
+            && (items_val.is_array() || items_val.is_object())
+        {
+            let s = items_val.to_string();
+            obj.insert("itemsJson".to_string(), json!(s));
         }
 
         validate_parameters(tool, &arguments)?;
@@ -63,10 +79,13 @@ pub fn execute_tool(
     }
 
     let mut call_args = arguments.clone();
-    if let Some(props) = tool.input_schema.get("properties").and_then(Value::as_object) {
-        if let Some(args_obj) = call_args.as_object_mut() {
-            args_obj.retain(|k, _| props.contains_key(k) || k == "sessionToken");
-        }
+    if let Some(props) = tool
+        .input_schema
+        .get("properties")
+        .and_then(Value::as_object)
+        && let Some(args_obj) = call_args.as_object_mut()
+    {
+        args_obj.retain(|k, _| props.contains_key(k) || k == "sessionToken");
     }
 
     let raw_result = client

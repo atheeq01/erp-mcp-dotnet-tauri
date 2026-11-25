@@ -5,13 +5,13 @@ import Header from "./Header";
 
 function AppLayout() {
     return (
-        <div className="flex h-screen w-screen overflow-hidden bg-(--paper) text-(--ink)">
+        <div className="fixed inset-0 flex flex-col md:flex-row overflow-hidden bg-(--paper) text-(--ink)">
             <Sidebar />
 
-            <div className="flex flex-1 flex-col min-w-0 h-full overflow-hidden">
+            <div className="flex flex-1 flex-col min-w-0 min-h-0 overflow-hidden">
                 <Header />
 
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto p-4 md:p-6">
                     <Outlet />
                 </main>
             </div>

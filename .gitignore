@@ -13,6 +13,7 @@
 # Node
 **/node_modules/
 **/dist/
+**/test-results/
 
 # Rust
 **/target/
@@ -20,7 +21,10 @@
 # Environment secrets
 .env
 .env.*
+**/.env
+**/.env.*
 !.env.example
+!**/.env.example
 appsettings.Development.json
 
 # Logs
@@ -42,3 +46,12 @@ Thumbs.db
 .antigravity/
 **/.antigravity/
 skills-lock.json
+
+# Agent traces (keep curated eval traces, ignore local interactive trace log)
+**/agent_traces.jsonl
+agent_traces.jsonl
+
+# local helper scripts, not part of the submission
+test_phase1_acceptance.py
+/docs
+agent-client/eval_results.md

@@ -63,12 +63,17 @@ impl McpClient {
 
     fn build_command() -> Result<Command, String> {
         let current_exe = std::env::current_exe().map_err(|e| e.to_string())?;
-        let exe_dir = current_exe.parent().unwrap_or_else(|| std::path::Path::new(""));
+        let exe_dir = current_exe
+            .parent()
+            .unwrap_or_else(|| std::path::Path::new(""));
 
         let binary_candidates = [
             exe_dir.join("SpilMcpServer.exe"),
             exe_dir.join("bin").join("SpilMcpServer.exe"),
-            exe_dir.join("resources").join("bin").join("SpilMcpServer.exe"),
+            exe_dir
+                .join("resources")
+                .join("bin")
+                .join("SpilMcpServer.exe"),
             PathBuf::from("bin").join("SpilMcpServer.exe"),
             PathBuf::from("src-tauri/bin").join("SpilMcpServer.exe"),
             PathBuf::from("frontend/src-tauri/bin").join("SpilMcpServer.exe"),
@@ -84,16 +89,24 @@ impl McpClient {
             }
         }
 
-        // Fallback for development: use `dotnet run`
-        let dev_project = PathBuf::from(
-            r"E:\spil\spil-mini-erp\backend\SpilMcpServer\SpilMcpServer\SpilMcpServer.csproj",
-        );
-        if dev_project.exists() {
-            let mut cmd = Command::new("dotnet");
-            cmd.args(["run", "--no-build", "--project"])
-                .arg(&dev_project)
-                .current_dir(dev_project.parent().unwrap());
-            return Ok(cmd);
+        // In development, locate the backend from the executable or working directory.
+        for root in
+            std::iter::once(exe_dir.to_path_buf()).chain(std::env::current_dir().into_iter())
+        {
+            for ancestor in root.ancestors() {
+                let project = ancestor
+                    .join("backend")
+                    .join("SpilMcpServer")
+                    .join("SpilMcpServer")
+                    .join("SpilMcpServer.csproj");
+                if project.exists() {
+                    let mut cmd = Command::new("dotnet");
+                    cmd.args(["run", "--no-build", "--project"])
+                        .arg(&project)
+                        .current_dir(project.parent().expect("project has a parent"));
+                    return Ok(cmd);
+                }
+            }
         }
 
         Err("Could not locate SpilMcpServer binary or dev project".into())

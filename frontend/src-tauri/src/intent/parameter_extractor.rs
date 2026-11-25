@@ -24,16 +24,37 @@ pub fn extract_parameters(query_text: &str, tool: &ToolDefinition) -> Extraction
                         .to_string(),
                 );
             }
+
+            let ord_re = Regex::new(r"(?i)\b(ORD-[A-Za-z0-9-]+)\b").unwrap();
+            if let Some(caps) = ord_re.captures(query_text)
+                && let Some(m) = caps.get(1)
+            {
+                extracted_map.insert(
+                    "orderNumber".to_string(),
+                    json!(m.as_str().to_ascii_uppercase()),
+                );
+            }
+
+            let last_ord_re =
+                Regex::new(r"(?i)\b(last|latest|most\s+recent|recent)\s+orders?\b").unwrap();
+            if last_ord_re.is_match(&lower) {
+                extracted_map.insert("lastOrder".to_string(), json!(true));
+            }
+
+            let who_re = Regex::new(r"(?i)\bwho\b").unwrap();
+            if who_re.is_match(&lower) {
+                extracted_map.insert("focus".to_string(), json!("creator"));
+            }
         }
         "get_inventory" => {
             // 1. Quoted product query: e.g. is this have "Spring-Clamp Terminal Block"
             let quote_re = Regex::new(r#"["']([^"']+)["']"#).unwrap();
-            if let Some(caps) = quote_re.captures(query_text) {
-                if let Some(p) = caps.get(1) {
-                    let val = p.as_str().trim();
-                    if !val.is_empty() {
-                        extracted_map.insert("searchQuery".to_string(), json!(val));
-                    }
+            if let Some(caps) = quote_re.captures(query_text)
+                && let Some(p) = caps.get(1)
+            {
+                let val = p.as_str().trim();
+                if !val.is_empty() {
+                    extracted_map.insert("searchQuery".to_string(), json!(val));
                 }
             }
 
@@ -86,21 +107,25 @@ pub fn extract_parameters(query_text: &str, tool: &ToolDefinition) -> Extraction
             }
 
             let name_re =
-                Regex::new(r"(?i)\b(?:for|customer|client|buyer)[:\s]+([A-Za-z\s]{2,30})\b").unwrap();
-            if let Some(caps) = name_re.captures(query_text) {
-                if let Some(name_match) = caps.get(1) {
-                    extracted_map.insert("customerName".to_string(), json!(name_match.as_str().trim()));
-                }
+                Regex::new(r"(?i)\b(?:for|customer|client|buyer)[:\s]+([A-Za-z\s]{2,30})\b")
+                    .unwrap();
+            if let Some(caps) = name_re.captures(query_text)
+                && let Some(name_match) = caps.get(1)
+            {
+                extracted_map.insert(
+                    "customerName".to_string(),
+                    json!(name_match.as_str().trim()),
+                );
             }
 
             // Extract quoted product name: e.g. create order "Spring-Clamp Terminal Block"
             let quote_re = Regex::new(r#"["']([^"']+)["']"#).unwrap();
-            if let Some(caps) = quote_re.captures(query_text) {
-                if let Some(p) = caps.get(1) {
-                    let val = p.as_str().trim();
-                    if !val.is_empty() {
-                        extracted_map.insert("productQuery".to_string(), json!(val));
-                    }
+            if let Some(caps) = quote_re.captures(query_text)
+                && let Some(p) = caps.get(1)
+            {
+                let val = p.as_str().trim();
+                if !val.is_empty() {
+                    extracted_map.insert("productQuery".to_string(), json!(val));
                 }
             }
 
@@ -110,38 +135,40 @@ pub fn extract_parameters(query_text: &str, tool: &ToolDefinition) -> Extraction
                     r#"(?i)\b(?:create\s+order\s+(?:for\s+)?|order\s+(?:\d+\s+)?(?:for\s+)?|buy\s+(?:\d+\s+)?(?:for\s+)?)([^,;.]+)"#,
                 )
                 .unwrap();
-                if let Some(caps) = unquoted_re.captures(query_text) {
-                    if let Some(m) = caps.get(1) {
-                        let raw_prod = m.as_str();
-                        let cleaned = Regex::new(r"(?i)\b(?:for|customer|client|buyer|\d{7,})\b.*$")
-                            .unwrap()
-                            .replace(raw_prod, "");
-                        let val = cleaned.trim().trim_matches(|c| c == '"' || c == '\'');
-                        if !val.is_empty()
-                            && val.to_lowercase() != "items"
-                            && val.to_lowercase() != "order"
-                        {
-                            extracted_map.insert("productQuery".to_string(), json!(val));
-                        }
+                if let Some(caps) = unquoted_re.captures(query_text)
+                    && let Some(m) = caps.get(1)
+                {
+                    let raw_prod = m.as_str();
+                    let cleaned = Regex::new(r"(?i)\b(?:for|customer|client|buyer|\d{7,})\b.*$")
+                        .unwrap()
+                        .replace(raw_prod, "");
+                    let val = cleaned.trim().trim_matches(|c| c == '"' || c == '\'');
+                    if !val.is_empty()
+                        && val.to_lowercase() != "items"
+                        && val.to_lowercase() != "order"
+                    {
+                        extracted_map.insert("productQuery".to_string(), json!(val));
                     }
                 }
             }
 
             // Extract quantity if present (e.g. "order 5 ..."), ignoring digits that belong to the phone number
-            let qty_re = Regex::new(r"\b(\d{1,4})\s*(?:pcs|units|items|boxes|quantity|qty|x)?\b").unwrap();
+            let qty_re =
+                Regex::new(r"\b(\d{1,4})\s*(?:pcs|units|items|boxes|quantity|qty|x)?\b").unwrap();
             for caps in qty_re.captures_iter(query_text) {
                 if let Some(m) = caps.get(1) {
                     let r = m.range();
-                    if let Some(ref pr) = phone_range {
-                        if r.start >= pr.start && r.end <= pr.end {
-                            continue;
-                        }
+                    if let Some(ref pr) = phone_range
+                        && r.start >= pr.start
+                        && r.end <= pr.end
+                    {
+                        continue;
                     }
-                    if let Ok(qty) = m.as_str().parse::<i64>() {
-                        if qty > 0 {
-                            extracted_map.insert("quantity".to_string(), json!(qty));
-                            break;
-                        }
+                    if let Ok(qty) = m.as_str().parse::<i64>()
+                        && qty > 0
+                    {
+                        extracted_map.insert("quantity".to_string(), json!(qty));
+                        break;
                     }
                 }
             }
@@ -152,20 +179,30 @@ pub fn extract_parameters(query_text: &str, tool: &ToolDefinition) -> Extraction
                 extracted_map.insert("sku".to_string(), json!(m.as_str()));
             }
 
-            let price_re = Regex::new(r"\$([0-9]+(?:\.[0-9]{1,2})?)").expect("Valid price regex");
+            let name_re = Regex::new(r#"(?i)\bproduct\s+name\s*[:=]?\s*["']([^"']+)["']"#)
+                .expect("Valid product name regex");
+            if let Some(name) = name_re.captures(query_text).and_then(|caps| caps.get(1)) {
+                let name = name.as_str().trim();
+                if !name.is_empty() {
+                    extracted_map.insert("name".to_string(), json!(name));
+                }
+            }
+
+            let price_re = Regex::new(r"(?i)\b(?:unit\s*price|price)\s*[:=]?\s*\$?\s*([0-9]+(?:\.[0-9]{1,2})?)\b|\$([0-9]+(?:\.[0-9]{1,2})?)")
+                .expect("Valid price regex");
             if let Some(price) = price_re
                 .captures(query_text)
-                .and_then(|caps| caps.get(1))
+                .and_then(|caps| caps.get(1).or_else(|| caps.get(2)))
                 .and_then(|m| m.as_str().parse::<f64>().ok())
             {
                 extracted_map.insert("unitPrice".to_string(), json!(price));
             }
 
-            let qty_re = Regex::new(r"\b([0-9]+)\s*(?:units?|pcs?|items?|quantity|qty)\b")
+            let qty_re = Regex::new(r"(?i)\b(?:initial\s+stock|quantity(?:\s+available)?|stock|qty)\s*[:=]?\s*([0-9]+)\b|\b([0-9]+)\s*(?:units?|pcs?|items?)\b")
                 .expect("Valid quantity regex");
             if let Some(qty) = qty_re
                 .captures(query_text)
-                .and_then(|caps| caps.get(1))
+                .and_then(|caps| caps.get(1).or_else(|| caps.get(2)))
                 .and_then(|m| m.as_str().parse::<i64>().ok())
             {
                 extracted_map.insert("quantityAvailable".to_string(), json!(qty));
@@ -205,6 +242,26 @@ pub fn extract_parameters(query_text: &str, tool: &ToolDefinition) -> Extraction
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn test_extract_labeled_inventory_creation() {
+        let tool = ToolDefinition {
+            name: "create_inventory".to_string(),
+            description: "Creates inventory".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["sessionToken", "sku", "name", "quantityAvailable", "unitPrice"]
+            }),
+        };
+        let result = extract_parameters(
+            r#"product name : "test 76" Initial Stock : 76 Unit price: 48.00 add this to inventory"#,
+            &tool,
+        );
+        assert_eq!(result.extracted["name"], "test 76");
+        assert_eq!(result.extracted["quantityAvailable"], 76);
+        assert_eq!(result.extracted["unitPrice"], 48.0);
+        assert_eq!(result.missing, vec!["sku"]);
+    }
 
     #[test]
     fn test_extract_quoted_product_for_order() {
@@ -252,7 +309,10 @@ mod tests {
             Some("Alice")
         );
         assert_eq!(
-            result.extracted.get("customerPhone").and_then(Value::as_str),
+            result
+                .extracted
+                .get("customerPhone")
+                .and_then(Value::as_str),
             Some("0771234567")
         );
     }
@@ -285,7 +345,10 @@ mod tests {
             Some("John Doe")
         );
         assert_eq!(
-            result.extracted.get("customerPhone").and_then(Value::as_str),
+            result
+                .extracted
+                .get("customerPhone")
+                .and_then(Value::as_str),
             Some("0712345678")
         );
     }
@@ -301,10 +364,7 @@ mod tests {
             }),
         };
 
-        let result = extract_parameters(
-            r#"is this have "Spring-Clamp Terminal Block""#,
-            &tool,
-        );
+        let result = extract_parameters(r#"is this have "Spring-Clamp Terminal Block""#, &tool);
         assert_eq!(
             result.extracted.get("searchQuery").and_then(Value::as_str),
             Some("Spring-Clamp Terminal Block")

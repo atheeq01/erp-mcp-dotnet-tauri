@@ -7,6 +7,9 @@ import {
     ShieldAlert,
     ChevronDown,
     ChevronRight,
+    Zap,
+    Bot,
+    XCircle,
 } from "lucide-react";
 import Button from "../common/Button";
 import { callMcpTool } from "../../services/mcpService";
@@ -16,7 +19,9 @@ function ScoreChip({ label, value, isPercent }) {
     const formatted = isPercent
         ? `${Math.round(value * 100)}%`
         : typeof value === "number"
-        ? value.toFixed(2)
+        ? Number.isInteger(value)
+            ? String(value)
+            : value.toFixed(2)
         : String(value);
 
     return (
@@ -1347,7 +1352,11 @@ function NeedsParamsForm({ tool, missing, extracted, onSubmit }) {
         onSubmit(parsed);
     }
 
-    const fields = missing || [];
+    // Show extracted inventory values as well so the operator can review them
+    // alongside the one required field that still needs input.
+    const fields = tool === "create_inventory"
+        ? ["sku", "name", "quantityAvailable", "unitPrice"]
+        : (missing || []);
 
     return (
         <form onSubmit={handleSubmit} className="mt-3 space-y-3 p-3.5 bg-(--paper) border border-(--line) rounded-xs">
@@ -1438,6 +1447,142 @@ function NeedsParamsForm({ tool, missing, extracted, onSubmit }) {
     );
 }
 
+function OrderCreatorHighlight({ order, label }) {
+    const orderNumber = order.orderNumber ?? order.OrderNumber ?? "-";
+    const username = order.username ?? order.Username ?? order.userId ?? order.UserId ?? "unknown";
+    const customerName = order.customerName ?? order.CustomerName;
+    const customerPhone = order.customerPhone ?? order.CustomerPhone;
+    const totalAmount = Number(order.totalAmount ?? order.TotalAmount ?? 0);
+    const createdAt = order.createdAtUtc ?? order.CreatedAtUtc ?? "";
+
+    return (
+        <div className="my-2 p-3.5 bg-(--paper) border border-(--ink) rounded-xs space-y-2">
+            <div className="flex items-center justify-between border-b border-(--line) pb-1.5">
+                <span className="text-[11px] font-mono uppercase tracking-wider font-bold text-(--ink)">
+                    {label}
+                </span>
+                <span className="font-mono text-xs font-bold text-(--accent)">{orderNumber}</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div>
+                    <span className="text-[10px] font-mono uppercase text-[color-mix(in_srgb,var(--ink)_60%,white)] block">
+                        Made By (Operator)
+                    </span>
+                    <span className="font-mono text-sm font-bold text-(--ink)">{username}</span>
+                </div>
+                {customerName && (
+                    <div>
+                        <span className="text-[10px] font-mono uppercase text-[color-mix(in_srgb,var(--ink)_60%,white)] block">
+                            Customer
+                        </span>
+                        <span className="font-mono text-xs font-semibold text-(--ink) block">
+                            {customerName}
+                        </span>
+                        {customerPhone && (
+                            <span className="text-[10px] font-mono text-[color-mix(in_srgb,var(--ink)_55%,white)] block">
+                                {customerPhone}
+                            </span>
+                        )}
+                    </div>
+                )}
+                <div>
+                    <span className="text-[10px] font-mono uppercase text-[color-mix(in_srgb,var(--ink)_60%,white)] block">
+                        Total Amount
+                    </span>
+                    <span className="font-mono text-sm font-bold text-(--ink) tabular-nums">
+                        ${totalAmount.toFixed(2)}
+                    </span>
+                </div>
+                <div>
+                    <span className="text-[10px] font-mono uppercase text-[color-mix(in_srgb,var(--ink)_60%,white)] block">
+                        Created At
+                    </span>
+                    <span className="font-mono text-xs text-(--ink)">
+                        {createdAt ? new Date(createdAt).toLocaleString() : "-"}
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function OrdersResultView({ orders, params, rawQuery, tool }) {
+    if (!orders || orders.length === 0) {
+        return (
+            <div className="my-2 p-4 border border-(--line) bg-(--paper) rounded-xs text-center">
+                <p className="text-sm font-semibold text-(--ink)">
+                    No orders found for: "{rawQuery || tool}"
+                </p>
+                <p className="text-xs text-[color-mix(in_srgb,var(--ink)_60%,white)] mt-1 font-mono">
+                    Database query executed successfully. Zero orders recorded.
+                </p>
+            </div>
+        );
+    }
+
+    let filtered = orders;
+    let highlightLabel = null;
+
+    if (params?.orderNumber) {
+        const target = String(params.orderNumber).trim().toLowerCase();
+        filtered = orders.filter(
+            (o) => String(o.orderNumber ?? o.OrderNumber ?? "").trim().toLowerCase() === target
+        );
+        if (filtered.length === 0) {
+            return (
+                <div className="my-2 p-3.5 bg-amber-50/70 border border-amber-400 rounded-xs flex items-start gap-2.5">
+                    <AlertCircle className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" strokeWidth={1.5} />
+                    <div>
+                        <span className="text-xs font-semibold text-amber-900 block">
+                            Order Not Found
+                        </span>
+                        <span className="text-xs font-mono text-(--ink) mt-0.5 block">
+                            No accessible order matched "{params.orderNumber}". (Sales users only see their own orders.)
+                        </span>
+                    </div>
+                </div>
+            );
+        }
+        highlightLabel = params?.focus === "creator" ? "Order Creator Details" : "Matched Order";
+    } else if (params?.lastOrder || params?.focus === "creator") {
+        const sorted = [...orders].sort((a, b) => {
+            const ta = Date.parse(a.createdAtUtc ?? a.CreatedAtUtc ?? "") || 0;
+            const tb = Date.parse(b.createdAtUtc ?? b.CreatedAtUtc ?? "") || 0;
+            return tb - ta;
+        });
+        filtered = [sorted[0]];
+        highlightLabel = "Latest Order Creator";
+    }
+
+    return (
+        <div>
+            {highlightLabel && filtered.length > 0 && (
+                <OrderCreatorHighlight order={filtered[0]} label={highlightLabel} />
+            )}
+            <OrdersTable orders={filtered} />
+        </div>
+    );
+}
+
+function WarningBanner({ warnings }) {
+    if (!warnings || warnings.length === 0) return null;
+    return (
+        <div className="my-2 p-3 bg-amber-50/80 border border-amber-400 rounded-xs flex items-start gap-2.5">
+            <ShieldAlert className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" strokeWidth={1.5} />
+            <div className="flex-1 space-y-1">
+                <span className="text-xs font-semibold text-amber-900 block">
+                    Server Warning
+                </span>
+                {warnings.map((w, idx) => (
+                    <span key={idx} className="text-xs font-mono text-(--ink) block leading-relaxed">
+                        {typeof w === "string" ? w : JSON.stringify(w)}
+                    </span>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 function DataResultView({ tool, data, params, rawQuery, onStartOrderWithItem }) {
     if (!data) {
         return (
@@ -1447,19 +1592,28 @@ function DataResultView({ tool, data, params, rawQuery, onStartOrderWithItem }) 
         );
     }
 
-    // Check for explicit error or permission denial from backend
-    if (data.success === false || data.isError || data.error) {
-        const errorMsg = data.message || data.error || "Operation failed verification check.";
+    const warnings = [];
+    if (typeof data.warning === "string" && data.warning.trim()) warnings.push(data.warning);
+    if (Array.isArray(data.warnings)) warnings.push(...data.warnings);
+
+    // Check for explicit error or permission denial from backend (.NET / MCP / validation)
+    if (data.success === false || data.isError || data.error || (Array.isArray(data.errors) && data.errors.length > 0)) {
+        const errorDetails = Array.isArray(data.errors) && data.errors.length > 0
+            ? data.errors.map((e) => (typeof e === "string" ? e : JSON.stringify(e))).join("; ")
+            : data.message || data.error || data.detail || "Operation failed verification check.";
         return (
-            <div className="my-2 p-3.5 bg-red-50/50 border border-(--accent) rounded-xs flex items-start gap-2.5">
-                <AlertCircle className="h-4 w-4 text-(--accent) shrink-0 mt-0.5" strokeWidth={1.5} />
-                <div className="flex-1">
-                    <span className="text-xs font-semibold text-(--accent) block">
-                        Access Denied / Verification Failure
-                    </span>
-                    <span className="text-xs font-mono text-(--ink) mt-0.5 block leading-relaxed">
-                        {errorMsg}
-                    </span>
+            <div>
+                <WarningBanner warnings={warnings} />
+                <div className="my-2 p-3.5 bg-red-50/50 border border-(--accent) rounded-xs flex items-start gap-2.5">
+                    <AlertCircle className="h-4 w-4 text-(--accent) shrink-0 mt-0.5" strokeWidth={1.5} />
+                    <div className="flex-1">
+                        <span className="text-xs font-semibold text-(--accent) block">
+                            Server Error / Verification Failure
+                        </span>
+                        <span className="text-xs font-mono text-(--ink) mt-0.5 block leading-relaxed whitespace-pre-wrap">
+                            {errorDetails}
+                        </span>
+                    </div>
                 </div>
             </div>
         );
@@ -1467,45 +1621,54 @@ function DataResultView({ tool, data, params, rawQuery, onStartOrderWithItem }) 
 
     if (data.user && !Array.isArray(data.user)) {
         return (
-            <UserProfileCard
-                user={data.user}
-                expiresAtUtc={data.expiresAtUtc}
-                message={data.message}
-            />
+            <>
+                <WarningBanner warnings={warnings} />
+                <UserProfileCard
+                    user={data.user}
+                    expiresAtUtc={data.expiresAtUtc}
+                    message={data.message}
+                />
+            </>
         );
     }
 
     if (data.orderNumber || (data.orderId && data.totalAmount !== undefined)) {
-        return <OrderReceiptCard data={data} />;
+        return (
+            <>
+                <WarningBanner warnings={warnings} />
+                <OrderReceiptCard data={data} />
+            </>
+        );
     }
 
     if (data.inventory && !Array.isArray(data.inventory)) {
-        return <ProductDetailCard item={data.inventory} message={data.message} />;
+        return (
+            <>
+                <WarningBanner warnings={warnings} />
+                <ProductDetailCard item={data.inventory} message={data.message} />
+            </>
+        );
     }
 
     if (data.orders && Array.isArray(data.orders)) {
-        if (data.orders.length === 0) {
-            return (
-                <div className="my-2 p-4 border border-(--line) bg-(--paper) rounded-xs text-center">
-                    <p className="text-sm font-semibold text-(--ink)">
-                        No orders found for: "{rawQuery || tool}"
-                    </p>
-                    <p className="text-xs text-[color-mix(in_srgb,var(--ink)_60%,white)] mt-1 font-mono">
-                        Database query executed successfully. Zero orders recorded.
-                    </p>
-                </div>
-            );
-        }
-        return <OrdersTable orders={data.orders} />;
+        return (
+            <>
+                <WarningBanner warnings={warnings} />
+                <OrdersResultView orders={data.orders} params={params} rawQuery={rawQuery} tool={tool} />
+            </>
+        );
     }
 
     if (data.inventory && Array.isArray(data.inventory)) {
         return (
-            <InventoryResultView
-                inventory={data.inventory}
-                searchQuery={params?.searchQuery || extractSearchTermFromQuery(rawQuery)}
-                onStartOrderWithItem={onStartOrderWithItem}
-            />
+            <>
+                <WarningBanner warnings={warnings} />
+                <InventoryResultView
+                    inventory={data.inventory}
+                    searchQuery={params?.searchQuery || extractSearchTermFromQuery(rawQuery)}
+                    onStartOrderWithItem={onStartOrderWithItem}
+                />
+            </>
         );
     }
 
@@ -1519,7 +1682,12 @@ function DataResultView({ tool, data, params, rawQuery, onStartOrderWithItem }) 
                 </div>
             );
         }
-        return <UsersTable users={data.users} />;
+        return (
+            <>
+                <WarningBanner warnings={warnings} />
+                <UsersTable users={data.users} />
+            </>
+        );
     }
 
     if (Array.isArray(data)) {
@@ -1534,7 +1702,7 @@ function DataResultView({ tool, data, params, rawQuery, onStartOrderWithItem }) 
         }
 
         if (data[0].orderNumber || data[0].OrderNumber) {
-            return <OrdersTable orders={data} />;
+            return <OrdersResultView orders={data} params={params} rawQuery={rawQuery} tool={tool} />;
         }
         if (data[0].sku || data[0].SKU) {
             return (
@@ -1552,14 +1720,176 @@ function DataResultView({ tool, data, params, rawQuery, onStartOrderWithItem }) 
 
     if (data.message && typeof data.message === "string") {
         return (
-            <div className="my-2 p-3 bg-white border border-(--line) rounded-xs flex items-center gap-2.5">
-                <CheckCircle className="h-4 w-4 text-(--accent) shrink-0" strokeWidth={1.5} />
-                <span className="text-xs font-mono text-(--ink)">{data.message}</span>
-            </div>
+            <>
+                <WarningBanner warnings={warnings} />
+                <div className="my-2 p-3 bg-white border border-(--line) rounded-xs flex items-center gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-(--accent) shrink-0" strokeWidth={1.5} />
+                    <span className="text-xs font-mono text-(--ink)">{data.message}</span>
+                </div>
+            </>
         );
     }
 
-    return <KeyValueGrid data={data} />;
+    return (
+        <>
+            <WarningBanner warnings={warnings} />
+            <KeyValueGrid data={data} />
+        </>
+    );
+}
+
+function renderInlineMarkdown(text) {
+    const parts = String(text).split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+    return parts.map((part, idx) => {
+        if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+            return (
+                <strong key={idx} className="font-semibold text-(--ink)">
+                    {part.slice(2, -2)}
+                </strong>
+            );
+        }
+        if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
+            return (
+                <code
+                    key={idx}
+                    className="px-1 py-0.5 bg-(--paper) border border-(--line) rounded-xs font-mono text-[11px]"
+                >
+                    {part.slice(1, -1)}
+                </code>
+            );
+        }
+        return <React.Fragment key={idx}>{part}</React.Fragment>;
+    });
+}
+
+function CliFormattedText({ text }) {
+    const blocks = String(text || "").split(/(```[\s\S]*?```)/g);
+    return (
+        <div className="space-y-2 text-xs leading-relaxed text-(--ink)">
+            {blocks.map((block, bIdx) => {
+                if (block.startsWith("```") && block.endsWith("```")) {
+                    const inner = block.replace(/^```[^\n]*\n?/, "").replace(/```$/, "");
+                    return (
+                        <pre
+                            key={bIdx}
+                            className="p-2.5 bg-(--paper) border border-(--line) rounded-xs font-mono text-[11px] overflow-x-auto whitespace-pre-wrap"
+                        >
+                            {inner}
+                        </pre>
+                    );
+                }
+
+                const lines = block.split(/\r?\n/);
+                return (
+                    <div key={bIdx} className="space-y-1">
+                        {lines.map((line, lIdx) => {
+                            const trimmed = line.trim();
+                            if (!trimmed) {
+                                return <div key={lIdx} className="h-1" />;
+                            }
+                            if (trimmed.startsWith("### ") || trimmed.startsWith("## ") || trimmed.startsWith("# ")) {
+                                const heading = trimmed.replace(/^#{1,3}\s+/, "");
+                                return (
+                                    <div key={lIdx} className="font-display font-bold text-xs text-(--ink) pt-1">
+                                        {renderInlineMarkdown(heading)}
+                                    </div>
+                                );
+                            }
+                            if (/^[-*]\s+/.test(trimmed)) {
+                                return (
+                                    <div key={lIdx} className="flex items-start gap-2 pl-1">
+                                        <span className="font-mono text-(--accent) select-none">•</span>
+                                        <span className="flex-1">{renderInlineMarkdown(trimmed.replace(/^[-*]\s+/, ""))}</span>
+                                    </div>
+                                );
+                            }
+                            return <p key={lIdx}>{renderInlineMarkdown(line)}</p>;
+                        })}
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
+function AgentApprovalCard({ approval, onApprove, onReject }) {
+    if (!approval) return null;
+    const ticket = approval.tool === "create_incident_ticket" && typeof approval.arguments === "object"
+        ? approval.arguments
+        : null;
+    const teamLabels = {
+        "oncall-auth": "Auth on-call team",
+        "oncall-orders": "Orders on-call team",
+        "oncall-inventory": "Inventory on-call team",
+        "sre-lead": "SRE lead",
+    };
+    const formattedPayload =
+        typeof approval.arguments === "string"
+            ? approval.arguments
+            : JSON.stringify(approval.arguments ?? {}, null, 2);
+
+    return (
+        <div className="mt-3 p-3.5 border border-(--accent) bg-(--paper) rounded-xs space-y-3">
+            <div className="flex items-start gap-2">
+                <ShieldAlert className="h-4 w-4 text-(--accent) shrink-0 mt-0.5" strokeWidth={1.5} />
+                <div className="flex-1">
+                    <div className="text-xs font-semibold text-(--ink)">
+                        {ticket ? "Approve this incident ticket?" : <>Approval required: <code className="font-mono">{approval.tool}</code></>}
+                    </div>
+                    <p className="mt-1 text-xs text-(--ink)/70">The AI cannot save this action until you approve it.</p>
+                    {approval.tainted && (
+                        <p className="mt-1 px-2 py-1 bg-red-50 border border-(--accent) rounded-xs text-[11px] font-mono font-semibold text-(--accent)">
+                            WARNING: Suspicious prompt injection instruction was detected earlier in this session!
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            {ticket ? <div className="p-3 bg-white border border-(--line) space-y-1.5 text-xs">
+                <strong className="block text-sm">{ticket.title || "Untitled incident"}</strong>
+                <p className="whitespace-pre-wrap">{ticket.summary}</p>
+                <p className="font-mono text-[11px]">{ticket.service_name || "Unassigned service"} · {ticket.severity || "Severity not set"} · {teamLabels[ticket.assignee] || ticket.assignee || "Unassigned"}</p>
+            </div> : <pre className="p-2.5 bg-white border border-(--line) rounded-xs font-mono text-[11px] overflow-x-auto whitespace-pre-wrap text-(--ink)">
+                {formattedPayload}
+            </pre>}
+
+            <div className="flex items-center justify-end gap-2 pt-1 border-t border-(--line)">
+                <Button variant="ghost" size="md" icon={XCircle} onClick={onReject}>
+                    Reject
+                </Button>
+                <Button variant="primary" size="md" icon={CheckCircle} onClick={onApprove}>
+                    {ticket ? "Approve and create ticket" : "Approve"}
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+function AgentResponseView({ res }) {
+    const tools = res.tools_called || [];
+    const agentWarnings = [];
+    if (res.tainted) {
+        agentWarnings.push("Security warning: Suspicious prompt injection instruction was detected in tool data and treated as untrusted data only.");
+    }
+    if (res.blocked_count > 0) {
+        agentWarnings.push(`Policy warning: ${res.blocked_count} disallowed tool/path request(s) were blocked by guardrails.`);
+    }
+    if (res.hit_step_limit) {
+        agentWarnings.push(`Execution warning: Agent reached the maximum step limit (${res.steps}) before completing.`);
+    }
+
+    return (
+        <div className="space-y-3">
+            <WarningBanner warnings={agentWarnings} />
+            <CliFormattedText text={res.answer} />
+            <div className="pt-2 border-t border-(--line) flex flex-wrap items-center gap-1.5">
+                {res.steps !== undefined && <ScoreChip label="steps" value={res.steps} />}
+                {tools.length > 0 && (
+                    <ScoreChip label="tools" value={tools.join(", ")} />
+                )}
+            </div>
+        </div>
+    );
 }
 
 function ChatMessage({
@@ -1569,6 +1899,8 @@ function ChatMessage({
     onCancelAction,
     onSubmitMissingParams,
     onSelectCandidate,
+    onApproveAgent,
+    onRejectAgent,
 }) {
     const isUser = message.role === "user";
     const isPending = message.status === "pending";
@@ -1579,9 +1911,14 @@ function ChatMessage({
 
     const resType = res?.type;
     const scores = res?.scores;
+    const isAiRoute =
+        resType === "AgentResponse" || res?.agent === "ai" || message.routeMode === "ai";
+    const showRouteBadge = !isPending && !isError && res && res?.tool !== "system";
 
     function formatTitle() {
+        if (isPending && message.pendingApproval) return "Agent Approval Gate";
         if (!res) return "Assistant Response";
+        if (resType === "AgentResponse") return "AI Agent Investigation";
         if (res.data?.success === false) return "Access Denied / Verification Failed";
         if (resType === "Executed") return res.intent || formatToolLabel(res.tool) || "Executed";
         if (resType === "NeedsParams") return `Parameters Required (${formatToolLabel(res.tool)})`;
@@ -1606,6 +1943,27 @@ function ChatMessage({
                             <span className="font-display font-bold text-xs uppercase tracking-wider text-(--ink)">
                                 {formatTitle()}
                             </span>
+                            {showRouteBadge && (
+                                <span
+                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-mono rounded-xs border ${
+                                        isAiRoute
+                                            ? "bg-(--paper) text-(--ink) border-(--ink)"
+                                            : "bg-(--paper) text-(--accent) border-(--line)"
+                                    }`}
+                                >
+                                    {isAiRoute ? (
+                                        <>
+                                            <Bot className="h-3 w-3" strokeWidth={1.75} />
+                                            <span>AI agent</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Zap className="h-3 w-3" strokeWidth={1.75} />
+                                            <span>Fast path</span>
+                                        </>
+                                    )}
+                                </span>
+                            )}
                         </div>
                         <div className="flex flex-wrap items-center gap-1.5">
                             {res?.tool && <ScoreChip label="tool" value={res.tool} />}
@@ -1622,16 +1980,34 @@ function ChatMessage({
                 {isUser && <p className="text-sm leading-relaxed">{message.content}</p>}
 
                 {isPending && (
-                    <div className="flex items-center gap-2.5 py-1 text-[color-mix(in_srgb,var(--ink)_65%,white)]">
-                        <Loader2 className="h-4 w-4 animate-spin text-(--accent)" strokeWidth={1.5} />
-                        <span className="font-mono text-xs">
-                            Resolving hybrid intent and querying live ERP MCP tools...
-                        </span>
+                    <div>
+                        <div className="flex items-center gap-2.5 py-1 text-[color-mix(in_srgb,var(--ink)_65%,white)]">
+                            <Loader2 className="h-4 w-4 animate-spin text-(--accent)" strokeWidth={1.5} />
+                            <span className="font-mono text-xs">
+                                {message.pendingApproval
+                                    ? "Waiting for operator approval before running mutating tool..."
+                                    : "Resolving hybrid intent and querying MCP tools..."}
+                            </span>
+                        </div>
+                        {message.pendingApproval && (
+                            <AgentApprovalCard
+                                approval={message.pendingApproval}
+                                onApprove={() =>
+                                    onApproveAgent?.(message.id, message.pendingApproval.request_id)
+                                }
+                                onReject={() =>
+                                    onRejectAgent?.(message.id, message.pendingApproval.request_id)
+                                }
+                            />
+                        )}
+                        {message.errorText && <p role="alert" className="mt-2 text-xs text-(--accent)">{message.errorText}</p>}
                     </div>
                 )}
 
                 {!isUser && !isPending && !isError && res && (
                     <div>
+                        {resType === "AgentResponse" && <AgentResponseView res={res} />}
+
                         {resType === "Executed" && (
                             <>
                                 <DataResultView

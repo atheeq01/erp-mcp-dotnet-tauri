@@ -1,9 +1,11 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { Trash2, ArrowDown } from "lucide-react";
+import { Trash2, ArrowDown, Settings } from "lucide-react";
 import { useChat } from "../context/ChatContext";
+import { useAuth } from "../hooks/useAuth";
 import ChatMessage from "../components/chat/ChatMessage";
 import ChatInput from "../components/chat/ChatInput";
 import ChatEmptyState from "../components/chat/ChatEmptyState";
+import LlmSettingsModal from "../components/chat/LlmSettingsModal";
 import Button from "../components/common/Button";
 
 function Chat() {
@@ -16,10 +18,16 @@ function Chat() {
         confirmAction,
         cancelAction,
         submitMissingParams,
+        respondToAgentApproval,
     } = useChat();
+
+    const { user } = useAuth();
+    const isAdmin = user?.role === "Admin";
 
     const scrollContainerRef = useRef(null);
     const [isAtBottom, setIsAtBottom] = useState(true);
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [activeModelLabel, setActiveModelLabel] = useState("");
 
     const handleScroll = useCallback(() => {
         const container = scrollContainerRef.current;
@@ -69,22 +77,41 @@ function Chat() {
                 <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-(--accent)" />
                     <span className="font-mono text-xs font-semibold text-(--ink)">
-                        Regex Intent MCP Terminal
+                        Hybrid MCP Terminal
                     </span>
                     <span className="text-[11px] text-[color-mix(in_srgb,var(--ink)_50%,white)]">
-                        - Pure Regex Intent Engine
+                        - Regex Fast-Path + AI Ops Agent
                     </span>
+                    {isAdmin && activeModelLabel && (
+                        <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-(--paper) border border-(--line) rounded-xs text-(--ink)">
+                            {activeModelLabel}
+                        </span>
+                    )}
                 </div>
 
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    icon={Trash2}
-                    onClick={clearConversation}
-                    title="Clear chat history"
-                >
-                    Clear History
-                </Button>
+                <div className="flex items-center gap-2">
+                    {isAdmin && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={Settings}
+                            onClick={() => setSettingsOpen(true)}
+                            title="Configure LLM provider, model, embedding model, and API key"
+                        >
+                            LLM Settings
+                        </Button>
+                    )}
+
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={Trash2}
+                        onClick={clearConversation}
+                        title="Clear chat history"
+                    >
+                        Clear History
+                    </Button>
+                </div>
             </div>
 
             <div
@@ -102,6 +129,12 @@ function Chat() {
                             onCancelAction={cancelAction}
                             onSubmitMissingParams={submitMissingParams}
                             onSelectCandidate={handleSend}
+                            onApproveAgent={(msgId, reqId) =>
+                                respondToAgentApproval(msgId, true, reqId)
+                            }
+                            onRejectAgent={(msgId, reqId) =>
+                                respondToAgentApproval(msgId, false, reqId)
+                            }
                         />
                     ))}
 
@@ -127,6 +160,18 @@ function Chat() {
                 onCancel={cancelRequest}
                 isPending={isPending}
             />
+
+            {isAdmin && (
+                <LlmSettingsModal
+                    isOpen={settingsOpen}
+                    onClose={() => setSettingsOpen(false)}
+                    onUpdated={(view) =>
+                        setActiveModelLabel(
+                            `${view.model} (.env key)`
+                        )
+                    }
+                />
+            )}
         </div>
     );
 }

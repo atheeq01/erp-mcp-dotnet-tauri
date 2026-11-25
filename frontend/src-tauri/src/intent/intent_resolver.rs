@@ -5,11 +5,68 @@ use crate::config::{
 use crate::error::AppError;
 use crate::intent::intent_detector::evaluate_regex_score;
 use crate::intent::parameter_extractor::extract_parameters;
-use crate::intent::preprocessing::{is_conversational_or_noise, preprocess};
+use crate::intent::preprocessing::{PreprocessedQuery, is_conversational_or_noise, preprocess};
 use crate::intent::regex_patterns::RegexPatterns;
 use crate::models::intent::{IntentCandidate, IntentResult, IntentScores};
 use crate::models::tool::ToolDefinition;
 use serde_json::Value;
+
+static OPS_KEYWORDS: &[&str] = &[
+    "order-service",
+    "order service",
+    "auth-service",
+    "auth service",
+    "inventory-service",
+    "inventory service",
+    "billing-service",
+    "billing service",
+    "service",
+    "health",
+    "telemetry",
+    "metrics",
+    "uptime",
+    "failing",
+    "failure",
+    "log",
+    "logs",
+    "deploy",
+    "deployment",
+    "deployments",
+    "incident",
+    "incidents",
+    "ticket",
+    "tickets",
+    "runbook",
+    "runbooks",
+    "checklist",
+    "release",
+    "readiness",
+    "latency",
+    "circuit",
+    "timeout",
+    "timeouts",
+    "outage",
+    "triage",
+    "root cause",
+    "crash",
+    "error",
+    "errors",
+    "workspace",
+];
+
+pub fn is_ops_or_triage_query(query: &PreprocessedQuery) -> bool {
+    let lower = query.raw.to_lowercase();
+    if lower.contains("-service") {
+        return true;
+    }
+    OPS_KEYWORDS.iter().any(|kw| {
+        if kw.contains(' ') || kw.contains('-') {
+            lower.contains(kw)
+        } else {
+            query.tokens.iter().any(|t| t == kw)
+        }
+    })
+}
 
 pub struct IntentResolver {
     patterns: RegexPatterns,
@@ -22,17 +79,33 @@ impl IntentResolver {
         }
     }
 
-    pub fn resolve(
-        &self,
-        query: &str,
-        tools: &[ToolDefinition],
-    ) -> Result<IntentResult, AppError> {
+    pub fn should_fallback_to_ai(&self, query: &str, tools: &[ToolDefinition]) -> bool {
+        let preprocessed = preprocess(query);
+        if is_conversational_or_noise(&preprocessed) || is_ops_or_triage_query(&preprocessed) {
+            return true;
+        }
+
+        let max_score = tools
+            .iter()
+            .map(|t| evaluate_regex_score(&preprocessed, t, &self.patterns).0)
+            .fold(0.0f64, f64::max);
+
+        max_score <= MINIMUM_MATCH_THRESHOLD
+    }
+
+    pub fn resolve(&self, query: &str, tools: &[ToolDefinition]) -> Result<IntentResult, AppError> {
         let preprocessed = preprocess(query);
 
         if is_conversational_or_noise(&preprocessed) {
             let suggestions: Vec<String> = tools.iter().map(|t| t.name.clone()).take(4).collect();
             return Ok(IntentResult::Ambiguous {
                 candidates: suggestions,
+            });
+        }
+
+        if is_ops_or_triage_query(&preprocessed) {
+            return Ok(IntentResult::Ambiguous {
+                candidates: Vec::new(),
             });
         }
 
@@ -313,9 +386,7 @@ mod tests {
     fn test_required_table_register_new_employee() {
         let resolver = IntentResolver::new();
         let tools = get_test_tools();
-        let result = resolver
-            .resolve("register a new employee", &tools)
-            .unwrap();
+        let result = resolver.resolve("register a new employee", &tools).unwrap();
 
         match result {
             IntentResult::NeedsParams { tool, missing, .. } => {
@@ -376,7 +447,10 @@ mod tests {
         let tools = get_test_tools();
 
         let result = resolver
-            .resolve("is this Pure Copper Busbar available in the inventory", &tools)
+            .resolve(
+                "is this Pure Copper Busbar available in the inventory",
+                &tools,
+            )
             .unwrap();
         match result {
             IntentResult::Executed { tool, .. } => assert_eq!(tool, "get_inventory"),
@@ -401,6 +475,114 @@ mod tests {
                 );
             }
             other => panic!("Expected Executed for get_inventory, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_phase7_dual_router_table_10_prompts() {
+        let resolver = IntentResolver::new();
+        let tools = get_test_tools();
+
+        // 5 deterministic ERP fast-path prompts
+        let fastpath_prompts = [
+            "get the orders",
+            "show low stock",
+            "list users",
+            "create user admin2 with password SecurePass123 role Sales",
+            "make order",
+        ];
+        for prompt in fastpath_prompts {
+            assert!(
+                !resolver.should_fallback_to_ai(prompt, &tools),
+                "ERP prompt '{prompt}' must route to fastpath"
+            );
+            let res = resolver.resolve(prompt, &tools).unwrap();
+            assert!(
+                !matches!(res, IntentResult::Ambiguous { .. }),
+                "ERP prompt '{prompt}' must resolve without ambiguity, got {res:?}"
+            );
+        }
+
+        // 3 ops / telemetry / release triage prompts -> AI agent fallback
+        let ops_prompts = [
+            "order-service is failing, why?",
+            "search error logs and deployment history for auth-service",
+            "is inventory-service ready for release?",
+        ];
+        for prompt in ops_prompts {
+            let res = resolver.resolve(prompt, &tools).unwrap();
+            assert!(
+                matches!(res, IntentResult::Ambiguous { .. })
+                    && resolver.should_fallback_to_ai(prompt, &tools),
+                "Ops prompt '{prompt}' must fall back to AI agent, got {res:?}"
+            );
+        }
+
+        // 2 ambiguous / conversational prompts -> AI agent fallback
+        let ambiguous_prompts = ["hello", "something looks broken, can you help?"];
+        for prompt in ambiguous_prompts {
+            let res = resolver.resolve(prompt, &tools).unwrap();
+            assert!(
+                matches!(res, IntentResult::Ambiguous { .. })
+                    && resolver.should_fallback_to_ai(prompt, &tools),
+                "Ambiguous prompt '{prompt}' must fall back to AI agent, got {res:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_order_creator_and_order_number_lookup_queries() {
+        let resolver = IntentResolver::new();
+        let tools = get_test_tools();
+
+        // "who is make the last order" -> must resolve to get_orders with lastOrder=true & focus=creator
+        let res_last = resolver
+            .resolve("who is make the last order", &tools)
+            .unwrap();
+        match res_last {
+            IntentResult::Executed { tool, params, .. } => {
+                assert_eq!(tool, "get_orders");
+                assert_eq!(params.get("lastOrder").and_then(Value::as_bool), Some(true));
+                assert_eq!(params.get("focus").and_then(Value::as_str), Some("creator"));
+            }
+            other => panic!("Expected Executed(get_orders), got {other:?}"),
+        }
+
+        // "who is make ORD-20261112-001" -> must resolve to get_orders with orderNumber & focus=creator
+        let res_ord = resolver
+            .resolve("who is make ORD-20261112-001", &tools)
+            .unwrap();
+        match res_ord {
+            IntentResult::Executed { tool, params, .. } => {
+                assert_eq!(tool, "get_orders");
+                assert_eq!(
+                    params.get("orderNumber").and_then(Value::as_str),
+                    Some("ORD-20261112-001")
+                );
+                assert_eq!(params.get("focus").and_then(Value::as_str), Some("creator"));
+            }
+            other => panic!("Expected Executed(get_orders), got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_spaced_service_and_singular_log_routes_to_ai_not_get_orders() {
+        let resolver = IntentResolver::new();
+        let tools = get_test_tools();
+
+        let prompts = [
+            "get the service health about the order service and search log about this",
+            "search log for auth service",
+            "check health of inventory service",
+        ];
+
+        for prompt in prompts {
+            let res = resolver.resolve(prompt, &tools).unwrap();
+            assert!(
+                matches!(res, IntentResult::Ambiguous { .. })
+                    && resolver.should_fallback_to_ai(prompt, &tools),
+                "Ops query '{prompt}' must route to AI agent, not ERP fastpath: {res:?}"
+            );
         }
     }
 }

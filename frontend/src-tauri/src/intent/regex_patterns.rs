@@ -7,6 +7,9 @@ pub struct RegexPatterns {
     update_action: Regex,
     deactivate_action: Regex,
     order_entity: Regex,
+    order_number: Regex,
+    who_creator: Regex,
+    last_order: Regex,
     inventory_entity: Regex,
     user_entity: Regex,
     negation_mutation: Regex,
@@ -16,7 +19,7 @@ impl RegexPatterns {
     pub fn new() -> Self {
         Self {
             query_action: Regex::new(
-                r"\b(get|list|show|view|find|display|fetch|check|inspect|what|which|search|available|availability|have|has|got)\b",
+                r"\b(get|list|show|view|find|display|fetch|check|inspect|what|which|who|search|available|availability|have|has|got)\b",
             )
             .expect("Valid query regex"),
             create_action: Regex::new(
@@ -35,6 +38,10 @@ impl RegexPatterns {
                 r"\b(order|orders|purchase|sale|sales)\b",
             )
             .expect("Valid order regex"),
+            order_number: Regex::new(r"(?i)\bord-[a-z0-9-]+\b").expect("Valid order number regex"),
+            who_creator: Regex::new(r"(?i)\bwho\b").expect("Valid who regex"),
+            last_order: Regex::new(r"(?i)\b(last|latest|most\s+recent|recent)\s+orders?\b")
+                .expect("Valid last order regex"),
             inventory_entity: Regex::new(
                 r"\b(inventory|product|products|stock|item|items|sku|skus)\b",
             )
@@ -50,7 +57,18 @@ impl RegexPatterns {
         }
     }
 
+    pub fn is_order_lookup_question(&self, text: &str) -> bool {
+        if self.order_number.is_match(text) {
+            return true;
+        }
+        (self.who_creator.is_match(text) || self.last_order.is_match(text))
+            && self.order_entity.is_match(text)
+    }
+
     pub fn match_action(&self, text: &str) -> IntentAction {
+        if self.is_order_lookup_question(text) {
+            return IntentAction::Query;
+        }
         if self.deactivate_action.is_match(text) {
             return IntentAction::Deactivate;
         }
@@ -67,7 +85,7 @@ impl RegexPatterns {
     }
 
     pub fn match_entity(&self, text: &str) -> IntentEntity {
-        if self.order_entity.is_match(text) {
+        if self.order_entity.is_match(text) || self.order_number.is_match(text) {
             return IntentEntity::Order;
         }
         if self.user_entity.is_match(text) {

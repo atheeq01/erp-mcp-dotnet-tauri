@@ -1,11 +1,27 @@
-import { createContext, useState } from "react";
-import { loginUser, logoutUser } from "../services/mcpService";
+import { createContext, useEffect, useState } from "react";
+import { getLocalSession, loginUser, logoutUser } from "../services/mcpService";
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [initializing, setInitializing] = useState(true);
+
+    useEffect(() => {
+        let active = true;
+        getLocalSession()
+            .then((session) => {
+                if (active) setUser({ username: session.username, role: session.role });
+            })
+            .catch(() => {
+                // A missing or expired desktop session leaves the operator signed out.
+            })
+            .finally(() => {
+                if (active) setInitializing(false);
+            });
+        return () => { active = false; };
+    }, []);
 
     async function login(username, password) {
         setLoading(true);
@@ -43,6 +59,7 @@ export function AuthProvider({ children }) {
             value={{
                 user,
                 loading,
+                initializing,
                 login,
                 logout,
                 isAuthenticated: Boolean(user),

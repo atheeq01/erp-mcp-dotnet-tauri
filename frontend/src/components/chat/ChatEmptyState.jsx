@@ -1,31 +1,39 @@
 import React from "react";
-import { ArrowRight, Boxes, FileSpreadsheet, Users, DollarSign } from "lucide-react";
+import { ArrowRight, Boxes, FileSpreadsheet, Users, ShieldAlert } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
 
 function ChatEmptyState({ onSelectPrompt }) {
+    const { user } = useAuth();
+    const isAdmin = user?.role === "Admin";
+
     const prompts = [
+        ...(isAdmin
+            ? [
+                  {
+                      icon: ShieldAlert,
+                      title: "Triage Failing Service (AI Agent)",
+                      query: "order-service is failing, why?",
+                      description: "Admin-only AI MCP agent inspecting logs, health, and deployments",
+                  },
+              ]
+            : []),
         {
             icon: Boxes,
             title: "Check Low Stock Items",
             query: "show low stock",
-            description: "Audits all items at or below safety reorder threshold (<= 25 units)",
-        },
-        {
-            icon: DollarSign,
-            title: "Current Inventory",
-            query: "get inventory",
-            description: "Lists all current inventory products and stock balances",
+            description: "Fast-path audit of items at or below safety threshold (<= 25 units)",
         },
         {
             icon: FileSpreadsheet,
             title: "Orders Overview",
             query: "get the orders",
-            description: "Retrieves order records logged in the system",
+            description: "Fast-path retrieval of customer order records logged in the system",
         },
         {
             icon: Users,
             title: "List System Users",
             query: "list users",
-            description: "Displays employee accounts, security roles, and active status",
+            description: "Fast-path listing of employee accounts and security roles",
         },
     ];
 

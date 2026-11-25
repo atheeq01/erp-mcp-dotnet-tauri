@@ -1,0 +1,24 @@
+[package]
+name = "agent-client"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "agent_client"
+path = "src/lib.rs"
+
+[[bin]]
+name = "agent"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+regex = "1.10"
+dotenvy = "0.15"
+chrono = { version = "0.4", features = ["serde"] }
+rmcp = { version = "3.11", default-features = false, features = ["client", "transport-child-process"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "process", "time", "io-util"] }
+reqwest = { version = "0.13", features = ["json"] }
+thiserror = "2.0"
+clap = { version = "4.6", features = ["derive"] }

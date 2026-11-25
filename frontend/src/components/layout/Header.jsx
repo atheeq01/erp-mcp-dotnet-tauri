@@ -11,6 +11,7 @@ const pageTitles = {
     "/orders": "Customer Orders",
     "/users": "User Administration",
     "/chat": "AI Operations Assistant",
+    "/operations": "Incident & Release Operations",
 };
 
 function Header() {
@@ -22,23 +23,23 @@ function Header() {
     return (
         <header
             style={{ height: "var(--topbar-h)" }}
-            className="shrink-0 flex items-center justify-between px-6 bg-(--paper) border-b border-(--line) select-none z-10"
+            className="shrink-0 flex items-center justify-between gap-2 px-4 md:px-6 bg-(--paper) border-b border-(--line) select-none z-10"
         >
-            <div className="flex items-center gap-3">
-                <h1 className="font-display text-base font-bold tracking-tight text-(--ink)">
+            <div className="flex items-center gap-3 min-w-0">
+                <h1 className="font-display text-sm md:text-base font-bold tracking-tight text-(--ink) truncate">
                     {title}
                 </h1>
             </div>
 
             <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-2">
                     <span className="text-sm font-medium text-(--ink)">
                         {user?.username}
                     </span>
                     <StatusBadge tone="default">{user?.role}</StatusBadge>
                 </div>
 
-                <div className="h-4 w-px bg-(--line)" />
+                <div className="hidden sm:block h-4 w-px bg-(--line)" />
 
                 <Button
                     variant="outline"

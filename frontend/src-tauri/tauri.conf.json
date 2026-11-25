@@ -14,7 +14,10 @@
       {
         "title": "SPIL Mini ERP",
         "width": 1280,
-        "height": 800
+        "height": 800,
+        "center": true,
+        "minWidth": 900,
+        "minHeight": 620
       }
     ],
     "security": {

@@ -7,6 +7,11 @@ use tauri::State;
 
 #[tauri::command]
 pub fn get_mcp_tools(state: State<'_, McpState>) -> Result<Value, AppError> {
+    let session = state.session.lock().map_err(|e| AppError::SessionError(e.to_string()))?;
+    if session.is_none() {
+        return Err(AppError::SessionError("Please log in to inspect tools.".into()));
+    }
+    drop(session);
     let mut client = state
         .client
         .lock()
@@ -54,7 +59,9 @@ pub fn call_authenticated_tool(
             return Err(AppError::ValidationError(reason));
         }
     } else {
-        return Err(AppError::SessionError("Please log in to execute tools.".into()));
+        return Err(AppError::SessionError(
+            "Please log in to execute tools.".into(),
+        ));
     }
 
     let mut client = state

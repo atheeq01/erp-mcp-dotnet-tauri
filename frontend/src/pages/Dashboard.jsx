@@ -8,6 +8,7 @@ import {
     ArrowRight,
     Plus,
     Bot,
+    Activity,
 } from "lucide-react";
 import { callMcpTool } from "../services/mcpService";
 import { useAuth } from "../hooks/useAuth";
@@ -16,6 +17,7 @@ import Button from "../components/common/Button";
 
 function Dashboard() {
     const { user } = useAuth();
+    const canViewOrders = ["Admin", "Sales"].includes(user?.role);
     const navigate = useNavigate();
 
     const [inventory, setInventory] = useState([]);
@@ -29,8 +31,8 @@ function Dashboard() {
 
         try {
             const [invRes, ordRes] = await Promise.all([
-                callMcpTool("get_inventory").catch(() => []),
-                callMcpTool("get_orders").catch(() => []),
+                callMcpTool("get_inventory"),
+                canViewOrders ? callMcpTool("get_orders") : Promise.resolve([]),
             ]);
 
             const rawInv = Array.isArray(invRes)
@@ -81,10 +83,14 @@ function Dashboard() {
         (item) => Number(item.quantityAvailable ?? 0) <= 20
     );
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const now = new Date();
     const ordersToday = orders.filter((o) => {
-        const date = o.createdAtUtc;
-        return date && date.startsWith(todayStr);
+        if (!o.createdAtUtc) return false;
+        const date = new Date(o.createdAtUtc);
+        return !Number.isNaN(date.getTime()) &&
+            date.getFullYear() === now.getFullYear() &&
+            date.getMonth() === now.getMonth() &&
+            date.getDate() === now.getDate();
     });
 
     const totalRevenue = orders.reduce(
@@ -192,10 +198,22 @@ function Dashboard() {
                     >
                         Stock Assistant
                     </Button>
+                    {user?.role === "Admin" && (
+                        <Button variant="outline" size="md" icon={Activity} onClick={() => navigate("/operations")}>
+                            Incidents
+                        </Button>
+                    )}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {error && (
+                <div role="alert" className="border border-(--accent) bg-white px-4 py-3 text-sm text-(--ink) flex items-center justify-between gap-4">
+                    <span>Dashboard data could not be loaded: {error}</span>
+                    <Button variant="outline" size="sm" onClick={loadDashboardData}>Retry</Button>
+                </div>
+            )}
+
+            <div className={`grid grid-cols-1 sm:grid-cols-2 ${canViewOrders ? "lg:grid-cols-4" : ""} gap-4`}>
                 <div className="p-5 bg-white border border-(--line) rounded-xs flex flex-col justify-between">
                     <div className="flex items-center justify-between">
                         <span className="label-caps text-[color-mix(in_srgb,var(--ink)_70%,white)]">
@@ -218,7 +236,7 @@ function Dashboard() {
                                      : "text-(--ink)"
                             }`}
                         >
-                            {loading ? "-" : lowStockItems.length}
+                            {loading || error ? "-" : lowStockItems.length}
                         </span>
                         <p className="text-xs text-[color-mix(in_srgb,var(--ink)_55%,white)] mt-1 font-mono">
                             {"SKUs with <= 20 units remaining"}
@@ -226,7 +244,7 @@ function Dashboard() {
                     </div>
                 </div>
 
-                <div className="p-5 bg-white border border-(--line) rounded-xs flex flex-col justify-between">
+                {canViewOrders && <div className="p-5 bg-white border border-(--line) rounded-xs flex flex-col justify-between">
                     <div className="flex items-center justify-between">
                         <span className="label-caps text-[color-mix(in_srgb,var(--ink)_70%,white)]">
                             Orders Today
@@ -235,15 +253,15 @@ function Dashboard() {
                     </div>
                     <div className="mt-4">
                         <span className="font-mono text-3xl font-bold tabular-nums text-(--ink)">
-                            {loading ? "-" : ordersToday.length}
+                            {loading || error ? "-" : ordersToday.length}
                         </span>
                         <p className="text-xs text-[color-mix(in_srgb,var(--ink)_55%,white)] mt-1 font-mono">
                             Orders registered today
                         </p>
                     </div>
-                </div>
+                </div>}
 
-                <div className="p-5 bg-white border border-(--line) rounded-xs flex flex-col justify-between">
+                {canViewOrders && <div className="p-5 bg-white border border-(--line) rounded-xs flex flex-col justify-between">
                     <div className="flex items-center justify-between">
                         <span className="label-caps text-[color-mix(in_srgb,var(--ink)_70%,white)]">
                             Total Order Volume
@@ -252,13 +270,13 @@ function Dashboard() {
                     </div>
                     <div className="mt-4">
                         <span className="font-mono text-3xl font-bold tabular-nums text-(--ink)">
-                            {loading ? "-" : `$${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                            {loading || error ? "-" : `$${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         </span>
                         <p className="text-xs text-[color-mix(in_srgb,var(--ink)_55%,white)] mt-1 font-mono">
                             Total across {orders.length} orders
                         </p>
                     </div>
-                </div>
+                </div>}
 
                 <div className="p-5 bg-white border border-(--line) rounded-xs flex flex-col justify-between">
                     <div className="flex items-center justify-between">
@@ -269,7 +287,7 @@ function Dashboard() {
                     </div>
                     <div className="mt-4">
                         <span className="font-mono text-3xl font-bold tabular-nums text-(--ink)">
-                            {loading ? "-" : totalStockUnits.toLocaleString()}
+                            {loading || error ? "-" : totalStockUnits.toLocaleString()}
                         </span>
                         <p className="text-xs text-[color-mix(in_srgb,var(--ink)_55%,white)] mt-1 font-mono">
                             Across {inventory.length} distinct SKUs
@@ -278,7 +296,7 @@ function Dashboard() {
                 </div>
             </div>
 
-            <div className="space-y-3 pt-2">
+            {canViewOrders && <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
                     <div>
                         <h3 className="font-display text-base font-bold tracking-tight text-(--ink)">
@@ -308,7 +326,7 @@ function Dashboard() {
                     searchPlaceholder="Filter recent orders..."
                     emptyMessage="No recent orders found."
                 />
-            </div>
+            </div>}
         </div>
     );
 }

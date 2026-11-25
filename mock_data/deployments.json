@@ -1,0 +1,67 @@
+[
+  {
+    "id": "dep-orders-201",
+    "service_name": "order-service",
+    "version": "v2.4.1",
+    "commit": "c7a8b9f",
+    "timestamp": "2026-11-20T07:30:00+00:00",
+    "deployer": "oncall-orders",
+    "status": "unhealthy",
+    "rollback_available": false,
+    "rollback_target_version": null,
+    "rollback_target_commit": null,
+    "notes": "Lower inventory-service call timeout from 30000ms to 3000ms and set max_retries: 0. No rollback plan configured."
+  },
+  {
+    "id": "dep-orders-200",
+    "service_name": "order-service",
+    "version": "v2.4.0",
+    "commit": "a1b2c3d",
+    "timestamp": "2026-11-19T06:30:00+00:00",
+    "deployer": "oncall-orders",
+    "status": "healthy",
+    "rollback_available": false,
+    "rollback_target_version": null,
+    "rollback_target_commit": null,
+    "notes": "Routine order fulfillment patch release and batch API update"
+  },
+  {
+    "id": "dep-auth-105",
+    "service_name": "auth-service",
+    "version": "v1.9.0",
+    "commit": "f4e3d2c",
+    "timestamp": "2026-11-18T10:30:00+00:00",
+    "deployer": "oncall-auth",
+    "status": "healthy",
+    "rollback_available": false,
+    "rollback_target_version": null,
+    "rollback_target_commit": null,
+    "notes": "Rotate JWT signing certificates and update OAuth token cache TTL. Verified READY for release."
+  },
+  {
+    "id": "dep-inv-302",
+    "service_name": "inventory-service",
+    "version": "v3.1.2",
+    "commit": "b9a8f7e",
+    "timestamp": "2026-11-20T05:30:00+00:00",
+    "deployer": "oncall-inventory",
+    "status": "failed",
+    "rollback_available": false,
+    "rollback_target_version": "v3.1.1",
+    "rollback_target_commit": "e8d7c6b",
+    "notes": "Deployment failed due to database migration deadlock on warehouse tables; rolled back to v3.1.1"
+  },
+  {
+    "id": "dep-inv-301",
+    "service_name": "inventory-service",
+    "version": "v3.1.1",
+    "commit": "e8d7c6b",
+    "timestamp": "2026-11-19T10:30:00+00:00",
+    "deployer": "oncall-inventory",
+    "status": "healthy",
+    "rollback_available": false,
+    "rollback_target_version": null,
+    "rollback_target_commit": null,
+    "notes": "Stable inventory tracking, SKU reservation, and warehouse sync release"
+  }
+]

@@ -58,4 +58,13 @@ pub enum IntentResult {
     Rejected {
         reason: String,
     },
+    AgentResponse {
+        answer: String,
+        steps: usize,
+        tools_called: Vec<String>,
+        hit_step_limit: bool,
+        blocked_count: usize,
+        tainted: bool,
+        agent: String,
+    },
 }

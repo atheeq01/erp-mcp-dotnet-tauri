@@ -13,6 +13,7 @@ const Inventory = lazy(() => import("./pages/Inventory"));
 const Orders = lazy(() => import("./pages/Orders"));
 const Users = lazy(() => import("./pages/Users"));
 const Chat = lazy(() => import("./pages/Chat"));
+const Operations = lazy(() => import("./pages/Operations"));
 
 function RouteSkeleton() {
     return (
@@ -25,7 +26,9 @@ function RouteSkeleton() {
 }
 
 function ProtectedRoute({ children, roles }) {
-    const { user } = useAuth();
+    const { user, initializing } = useAuth();
+
+    if (initializing) return <RouteSkeleton />;
 
     if (!user) {
         return <Navigate to="/login" replace />;
@@ -39,7 +42,9 @@ function ProtectedRoute({ children, roles }) {
 }
 
 function PublicRoute({ children }) {
-    const { user } = useAuth();
+    const { user, initializing } = useAuth();
+
+    if (initializing) return <RouteSkeleton />;
 
     if (user) {
         return <Navigate to="/dashboard" replace />;
@@ -102,6 +107,15 @@ function AppRoutes() {
                         element={
                             <ProtectedRoute roles={["Admin"]}>
                                 <Users />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/operations"
+                        element={
+                            <ProtectedRoute roles={["Admin"]}>
+                                <Operations />
                             </ProtectedRoute>
                         }
                     />
